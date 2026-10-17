@@ -11,6 +11,8 @@
 
 #include <stdint.h>
 
+#include "util/u_atomic.h"
+
 struct kk_precompiled_info {
    uint16_t workgroup_size[3];
 };
@@ -18,6 +20,7 @@ struct kk_precompiled_info {
 struct kk_precompiled_shader {
    struct kk_precompiled_info info;
    mtl_compute_pipeline_state *pipeline;
+   p_atomic_t ready;
 };
 
 #endif /* KK_PRECOMPILED_SHADER_H_ */
