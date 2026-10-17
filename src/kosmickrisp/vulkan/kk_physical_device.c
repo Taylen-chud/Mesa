@@ -963,16 +963,49 @@ kk_get_device_properties(
             "Mesa " PACKAGE_VERSION MESA_GIT_SHA1);
 }
 
+/* Everything outside the shader itself that changes what the compiler
+ * produces. Cached shaders are only valid for the same value. */
+static uint64_t
+kk_physical_device_compiler_flags(const struct kk_physical_device *pdev)
+{
+   struct {
+      uint64_t disabled_workarounds;
+      uint64_t debug_flags;
+      uint64_t experimental_flags;
+      uint32_t msl_version;
+      uint32_t gpu_apple_family;
+   } flags;
+   memset(&flags, 0, sizeof(flags));
+   flags.disabled_workarounds = pdev->settings.disabled_workarounds;
+   flags.debug_flags = (uint64_t)kk_mesa_debug_flags;
+   flags.experimental_flags = (uint64_t)kk_mesa_experimental_flags;
+   flags.msl_version = (uint32_t)pdev->info.msl_version;
+   flags.gpu_apple_family = pdev->info.gpu_apple_family;
+
+   blake3_hasher blake3_ctx;
+   _mesa_blake3_init(&blake3_ctx);
+   _mesa_blake3_update(&blake3_ctx, &flags, sizeof(flags));
+
+   unsigned char blake3[BLAKE3_KEY_LEN];
+   _mesa_blake3_final(&blake3_ctx, blake3);
+
+   uint64_t out;
+   memcpy(&out, blake3, sizeof(out));
+   return out;
+}
+
 static void
 kk_physical_device_init_pipeline_cache(struct kk_physical_device *pdev)
 {
    struct kk_instance *instance = kk_physical_device_instance(pdev);
+   const uint64_t compiler_flags = kk_physical_device_compiler_flags(pdev);
 
    blake3_hasher blake3_ctx;
    _mesa_blake3_init(&blake3_ctx);
 
    _mesa_blake3_update(&blake3_ctx, instance->driver_build_sha,
                        sizeof(instance->driver_build_sha));
+   _mesa_blake3_update(&blake3_ctx, &compiler_flags, sizeof(compiler_flags));
 
    unsigned char blake3[BLAKE3_KEY_LEN];
    _mesa_blake3_final(&blake3_ctx, blake3);
@@ -980,6 +1013,20 @@ kk_physical_device_init_pipeline_cache(struct kk_physical_device *pdev)
    STATIC_ASSERT(BLAKE3_KEY_LEN >= VK_UUID_SIZE);
    memcpy(pdev->vk.properties.pipelineCacheUUID, blake3, VK_UUID_SIZE);
    memcpy(pdev->vk.properties.shaderBinaryUUID, blake3, VK_UUID_SIZE);
+
+#ifdef ENABLE_SHADER_CACHE
+   /* Without this the runtime has nowhere to keep compiled shaders between
+    * runs, so every launch translated every shader from NIR to MSL again. The
+    * location comes from MESA_SHADER_CACHE_DIR. */
+   char renderer[24];
+   snprintf(renderer, sizeof(renderer), "kk_apple%u",
+            pdev->info.gpu_apple_family);
+
+   char timestamp[BLAKE3_HEX_LEN];
+   _mesa_blake3_format(timestamp, instance->driver_build_sha);
+
+   pdev->vk.disk_cache = disk_cache_create(renderer, timestamp, compiler_flags);
+#endif
 }
 
 static void
@@ -1224,6 +1271,7 @@ kk_enumerate_physical_devices(struct vk_instance *_instance)
    return VK_SUCCESS;
 
 fail_disk_cache:
+   kk_physical_device_free_disk_cache(pdev);
    vk_physical_device_finish(&pdev->vk);
 fail_mtl_dev:
    mtl_release(pdev->mtl_dev_handle);

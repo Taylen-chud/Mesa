@@ -21,6 +21,10 @@
 #include "kosmickrisp/bridge/vk_to_mtl_map.h"
 #include "kosmickrisp/compiler/nir_to_msl.h"
 
+#include "util/hash_table.h"
+#include "util/ralloc.h"
+#include "util/simple_mtx.h"
+
 #include "nir_builder.h"
 #include "nir_lower_blend.h"
 
@@ -1376,6 +1380,66 @@ kk_gather_ds_info(const struct vk_depth_stencil_state *ds, bool has_depth,
    }
 }
 
+/* Everything kk_compile_ds_state() reads, laid out so it can be hashed and
+ * compared as raw bytes. Always zero it before filling it in. */
+struct kk_ds_key {
+   uint32_t depth_compare_op;
+   uint8_t has_depth_write;
+   uint8_t has_stencil_test;
+   struct {
+      uint8_t depth_fail;
+      uint8_t fail;
+      uint8_t pass;
+      uint8_t compare;
+      uint8_t compare_mask;
+      uint8_t write_mask;
+   } stencil_front, stencil_back;
+};
+
+struct kk_ds_entry {
+   struct kk_ds_key key;
+   mtl_depth_stencil_state *state;
+};
+
+/* Stencil masks are arbitrary bytes, so keep a runaway app from growing the
+ * cache forever. Past this we just stop caching new combinations. */
+#define KK_DS_CACHE_MAX_ENTRIES 512
+
+static uint32_t
+kk_ds_key_hash(const void *key)
+{
+   return _mesa_hash_data(key, sizeof(struct kk_ds_key));
+}
+
+static bool
+kk_ds_key_equal(const void *a, const void *b)
+{
+   return memcmp(a, b, sizeof(struct kk_ds_key)) == 0;
+}
+
+void
+kk_device_init_ds_cache(struct kk_device *dev)
+{
+   simple_mtx_init(&dev->ds_cache.lock, mtx_plain);
+   dev->ds_cache.ht = NULL;
+}
+
+void
+kk_device_finish_ds_cache(struct kk_device *dev)
+{
+   if (dev->ds_cache.ht) {
+      hash_table_foreach(dev->ds_cache.ht, entry) {
+         struct kk_ds_entry *e = entry->data;
+         mtl_release(e->state);
+      }
+      ralloc_free(dev->ds_cache.ht);
+      dev->ds_cache.ht = NULL;
+   }
+   simple_mtx_destroy(&dev->ds_cache.lock);
+}
+
+/* Returns a state the caller owns a reference to, same as before the cache
+ * existed. On a hit that is a new reference to the cached object. */
 mtl_depth_stencil_state *
 kk_compile_depth_stencil_state(struct kk_device *device,
                                const struct vk_depth_stencil_state *ds,
@@ -1383,7 +1447,65 @@ kk_compile_depth_stencil_state(struct kk_device *device,
 {
    struct kk_shader_info info = {};
    kk_gather_ds_info(ds, has_depth, has_stencil, &info);
-   return kk_compile_ds_state(device, &info);
+
+   struct kk_ds_key key;
+   memset(&key, 0, sizeof(key));
+   key.depth_compare_op = info.vs.depth_compare_op;
+   key.has_depth_write = info.vs.has_depth_write;
+   key.has_stencil_test = info.vs.has_stencil_test;
+   key.stencil_front.depth_fail = info.vs.stencil_front.depth_fail;
+   key.stencil_front.fail = info.vs.stencil_front.fail;
+   key.stencil_front.pass = info.vs.stencil_front.pass;
+   key.stencil_front.compare = info.vs.stencil_front.compare;
+   key.stencil_front.compare_mask = info.vs.stencil_front.compare_mask;
+   key.stencil_front.write_mask = info.vs.stencil_front.write_mask;
+   key.stencil_back.depth_fail = info.vs.stencil_back.depth_fail;
+   key.stencil_back.fail = info.vs.stencil_back.fail;
+   key.stencil_back.pass = info.vs.stencil_back.pass;
+   key.stencil_back.compare = info.vs.stencil_back.compare;
+   key.stencil_back.compare_mask = info.vs.stencil_back.compare_mask;
+   key.stencil_back.write_mask = info.vs.stencil_back.write_mask;
+
+   struct kk_ds_state_cache *cache = &device->ds_cache;
+   mtl_depth_stencil_state *state = NULL;
+
+   simple_mtx_lock(&cache->lock);
+
+   if (!cache->ht)
+      cache->ht = _mesa_hash_table_create(NULL, kk_ds_key_hash, kk_ds_key_equal);
+
+   if (cache->ht) {
+      struct hash_entry *he = _mesa_hash_table_search(cache->ht, &key);
+      if (he) {
+         struct kk_ds_entry *e = he->data;
+         state = mtl_retain(e->state);
+      }
+   }
+
+   if (!state) {
+      state = kk_compile_ds_state(device, &info);
+
+      if (state && cache->ht && cache->ht->entries < KK_DS_CACHE_MAX_ENTRIES) {
+         struct kk_ds_entry *e = ralloc(cache->ht, struct kk_ds_entry);
+         if (e) {
+            e->key = key;
+            /* The cache keeps its own reference. */
+            e->state = mtl_retain(state);
+            _mesa_hash_table_insert(cache->ht, &e->key, e);
+         }
+      }
+   }
+
+   simple_mtx_unlock(&cache->lock);
+
+   return state;
+}
+
+static void
+kk_msl_copy(struct msl_compile_data *dst, const struct msl_compile_data *src)
+{
+   dst->code = ralloc_strdup(NULL, src->code);
+   dst->entrypoint_name = ralloc_strdup(NULL, src->entrypoint_name);
 }
 
 static void

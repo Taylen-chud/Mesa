@@ -300,6 +300,8 @@ kk_CreateDevice(VkPhysicalDevice physicalDevice,
    if (dev->mtl_compiler_handle == NULL)
       goto fail_init;
 
+   kk_device_init_ds_cache(dev);
+
    /* We need to initialize the device residency set before any bo is created. */
    simple_mtx_init(&dev->residency_set.mutex, mtx_plain);
    dev->residency_set.handle = mtl_new_residency_set(dev->mtl_handle);
@@ -312,6 +314,17 @@ kk_CreateDevice(VkPhysicalDevice physicalDevice,
       if (result != VK_SUCCESS)
          goto fail_vab_memory;
       dev->has_queue = true;
+   }
+
+   /* Shared cache used when the app doesn't give us one, and the layer that
+    * hands compiled shaders to and from the physical device's disk cache. */
+   struct vk_pipeline_cache_create_info cache_info = {
+      .weak_ref = true,
+   };
+   dev->vk.mem_cache = vk_pipeline_cache_create(&dev->vk, &cache_info, NULL);
+   if (dev->vk.mem_cache == NULL) {
+      result = VK_ERROR_OUT_OF_HOST_MEMORY;
+      goto fail_queue;
    }
 
    result = kk_device_init_meta(dev);
@@ -348,6 +361,8 @@ fail_query_table:
 fail_meta:
    kk_device_finish_meta(dev);
 fail_mem_cache:
+   vk_pipeline_cache_destroy(dev->vk.mem_cache, NULL);
+fail_queue:
    if (dev->has_queue) {
       kk_queue_finish(dev, &dev->queue);
       dev->has_queue = false;
@@ -356,6 +371,7 @@ fail_vab_memory:
    mtl_release(dev->residency_set.handle);
    simple_mtx_destroy(&dev->residency_set.mutex);
 fail_compiler:
+   kk_device_finish_ds_cache(dev);
    kk_release_compiler(dev);
 fail_init:
    vk_device_finish(&dev->vk);
@@ -384,6 +400,8 @@ kk_DestroyDevice(VkDevice _device, const VkAllocationCallbacks *pAllocator)
    kk_device_finish_lib(dev);
    kk_query_table_finish(dev, &dev->occlusion_queries);
    kk_destroy_sampler_heap(dev, &dev->samplers);
+   kk_device_finish_ds_cache(dev);
+   vk_pipeline_cache_destroy(dev->vk.mem_cache, NULL);
 
    /* Geometry heap */
    if (dev->heap)

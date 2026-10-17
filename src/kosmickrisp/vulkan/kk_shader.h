@@ -20,6 +20,7 @@
 #include "vk_shader.h"
 
 struct kk_cmd_buffer;
+struct kk_device;
 
 struct kk_tess_info {
    enum tess_primitive_mode mode : 8;
@@ -197,5 +198,8 @@ VkResult kk_compile_nir_shader(struct kk_device *dev, nir_shader *nir,
 
 void kk_cmd_bind_compute_shader(struct kk_cmd_buffer *cmd,
                                 struct kk_shader *shader);
+
+void kk_device_init_ds_cache(struct kk_device *dev);
+void kk_device_finish_ds_cache(struct kk_device *dev);
 
 #endif /* KK_SHADER_H */

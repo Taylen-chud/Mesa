@@ -73,7 +73,16 @@ struct kk_sampler_heap {
 };
 
 struct kk_precompiled_cache {
+   simple_mtx_t lock;
    struct kk_precompiled_shader shaders[LIBKK_NUM_PROGRAMS];
+};
+
+/* Metal depth/stencil states created for dynamic depth/stencil state. Apps that
+ * toggle depth or stencil state every few draws would otherwise build a new
+ * Metal object each time. The cache owns one reference to every entry. */
+struct kk_ds_state_cache {
+   simple_mtx_t lock;
+   struct hash_table *ht;
 };
 
 struct kk_device {
@@ -94,6 +103,7 @@ struct kk_device {
    struct kk_residency_set residency_set;
 
    struct kk_precompiled_cache precompiled_cache;
+   struct kk_ds_state_cache ds_cache;
 
    bool has_queue;
    struct kk_queue queue;
@@ -117,6 +127,9 @@ VkResult kk_device_init_meta(struct kk_device *dev);
 void kk_device_finish_meta(struct kk_device *dev);
 VkResult kk_device_init_lib(struct kk_device *dev);
 void kk_device_finish_lib(struct kk_device *dev);
+/* Builds the program on first use. Returns NULL if Metal rejects it. */
+struct kk_precompiled_shader *
+kk_device_get_precompiled(struct kk_device *dev, enum libkk_program idx);
 void kk_device_add_heap_to_residency_set(struct kk_device *dev, mtl_heap *heap);
 void kk_device_remove_heap_from_residency_set(struct kk_device *dev,
                                               mtl_heap *heap);
