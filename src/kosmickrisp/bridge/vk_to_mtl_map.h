@@ -6,6 +6,8 @@
 #ifndef KK_MTL_TO_VK_MAP_H
 #define KK_MTL_TO_VK_MAP_H 1
 
+#include <vulkan/vulkan.h>
+
 struct mtl_origin;
 struct mtl_size;
 enum mtl_primitive_type;
