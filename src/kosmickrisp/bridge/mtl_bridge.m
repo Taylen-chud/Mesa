@@ -114,21 +114,9 @@ mtl_acceleration_structure_encoder_copy(mtl_acceleration_structure_command_encod
    @autoreleasepool {
       id<MTLAccelerationStructureCommandEncoder> enc = (id<MTLAccelerationStructureCommandEncoder>)encoder;
 
-      MTLAccelerationStructureCopyMode mtl_mode;
-      switch (mode) {
-      case MTL_COPY_ACCELERATION_STRUCTURE_MODE_CLONE:
-         mtl_mode = MTLAccelerationStructureCopyModeClone;
-         break;
-      case MTL_COPY_ACCELERATION_STRUCTURE_MODE_COMPACT:
-         mtl_mode = MTLAccelerationStructureCopyModeCompact;
-         break;
-      case MTL_COPY_ACCELERATION_STRUCTURE_MODE_SERIALIZE:
-         mtl_mode = MTLAccelerationStructureCopyModeSerialize;
-         break;
-      case MTL_COPY_ACCELERATION_STRUCTURE_MODE_DESERIALIZE:
-         mtl_mode = MTLAccelerationStructureCopyModeDeserialize;
-         break;
-      }
+      // MTLAccelerationStructureCopyMode enum not available in iOS 26 SDK
+      // Using integer values directly matching our enum definitions
+      NSUInteger mtl_mode = mode;
 
       [enc copyAccelerationStructure:(id<MTLAccelerationStructure>)dst
                     sourceAccelerationStructure:(id<MTLAccelerationStructure>)src
@@ -165,6 +153,10 @@ mtl_acceleration_structure_get_gpu_address(mtl_acceleration_structure *as)
 {
    @autoreleasepool {
       id<MTLAccelerationStructure> mtl_as = (id<MTLAccelerationStructure>)as;
-      return (uint64_t)mtl_as.gpuResourceID;
+      MTLResourceID resource_id = mtl_as.gpuResourceID;
+      // MTLResourceID is a struct, use union to convert to uint64_t
+      union { MTLResourceID id; uint64_t value; } converter;
+      converter.id = resource_id;
+      return converter.value;
    }
 }
