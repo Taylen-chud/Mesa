@@ -2740,7 +2740,7 @@ kk_CmdDrawMeshTasksIndirectEXT(VkCommandBuffer commandBuffer,
    mtl_render_encoder *encoder = cmd->state.gfx.encoder;
    uint64_t indirect_buffer = buf->bo->map + offset;
 
-   mtl_draw_mesh_threadgroups_indirect(encoder, indirect_buffer, 0);
+   mtl_draw_mesh_threadgroups_indirect(encoder, indirect_buffer, offset);
 }
 
 VKAPI_ATTR void VKAPI_CALL

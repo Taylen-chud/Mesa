@@ -297,6 +297,21 @@ index_size_in_bytes_to_mtl_index_type(unsigned bytes)
    }
 }
 
+enum mtl_index_type
+vk_index_type_to_mtl_index_type(enum VkIndexType index_type)
+{
+   switch (index_type) {
+   case VK_INDEX_TYPE_UINT16:
+      return MTL_INDEX_TYPE_UINT16;
+   case VK_INDEX_TYPE_UINT32:
+      return MTL_INDEX_TYPE_UINT32;
+   case VK_INDEX_TYPE_NONE_KHR:
+      return MTL_INDEX_TYPE_UINT16; /* Won't be used, but need a valid value */
+   default:
+      UNREACHABLE("Unsupported VkIndexType");
+   }
+}
+
 unsigned
 mtl_index_type_to_size_B(enum mtl_index_type type)
 {

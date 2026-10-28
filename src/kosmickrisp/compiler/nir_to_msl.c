@@ -76,38 +76,36 @@ static const char *sysval_table[SYSTEM_VALUE_MAX] = {
       "uint mtl_AmplificationID [[amplification_id]]",
    [SYSTEM_VALUE_FIRST_VERTEX] = "uint gl_FirstVertex [[base_vertex]]",
    /* Mesh Shader system values */
-   [SYSTEM_VALUE_MESH_WORKGROUP_SIZE] =
-      "uint gl_MeshWorkgroupSize [[threads_per_simdgroup]]",
-   [SYSTEM_VALUE_MESH_VERTEX_COUNT] =
-      "uint gl_MeshVerticesPerPrimitive [[vertices_per_primitive]]",
-   [SYSTEM_VALUE_TASK_WORKGROUP_SIZE] =
-      "uint gl_TaskWorkgroupSize [[threads_per_simdgroup]]",
+   [SYSTEM_VALUE_MESH_VIEW_COUNT] =
+      "uint gl_MeshViewCount [[mesh_view_count]]",
+   [SYSTEM_VALUE_MESH_VIEW_INDICES] =
+      "uint gl_MeshViewIndices [[mesh_view_indices]]",
    /* Ray Tracing system values */
-   [SYSTEM_VALUE_RAY_LAUNCH_ID_KHR] =
+   [SYSTEM_VALUE_RAY_LAUNCH_ID] =
       "uint3 gl_LaunchIDEXT [[ray_launch_id]]",
-   [SYSTEM_VALUE_RAY_LAUNCH_SIZE_KHR] =
+   [SYSTEM_VALUE_RAY_LAUNCH_SIZE] =
       "uint3 gl_LaunchSizeEXT [[ray_launch_size]]",
-   [SYSTEM_VALUE_RAY_WORLD_ORIGIN_KHR] =
+   [SYSTEM_VALUE_RAY_WORLD_ORIGIN] =
       "float3 gl_WorldRayOriginEXT [[ray_world_origin]]",
-   [SYSTEM_VALUE_RAY_WORLD_DIRECTION_KHR] =
+   [SYSTEM_VALUE_RAY_WORLD_DIRECTION] =
       "float3 gl_WorldRayDirectionEXT [[ray_world_direction]]",
-   [SYSTEM_VALUE_RAY_OBJECT_ORIGIN_KHR] =
+   [SYSTEM_VALUE_RAY_OBJECT_ORIGIN] =
       "float3 gl_ObjectRayOriginEXT [[ray_object_origin]]",
-   [SYSTEM_VALUE_RAY_OBJECT_DIRECTION_KHR] =
+   [SYSTEM_VALUE_RAY_OBJECT_DIRECTION] =
       "float3 gl_ObjectRayDirectionEXT [[ray_object_direction]]",
-   [SYSTEM_VALUE_RAY_T_MIN_KHR] =
+   [SYSTEM_VALUE_RAY_T_MIN] =
       "float gl_RayTminEXT [[ray_tmin]]",
-   [SYSTEM_VALUE_RAY_T_MAX_KHR] =
+   [SYSTEM_VALUE_RAY_T_MAX] =
       "float gl_RayTmaxEXT [[ray_tmax]]",
-   [SYSTEM_VALUE_RAY_INSTANCE_CUSTOM_INDEX_KHR] =
+   [SYSTEM_VALUE_RAY_INSTANCE_CUSTOM_INDEX] =
       "uint gl_InstanceCustomIndexEXT [[ray_instance_custom_index]]",
-   [SYSTEM_VALUE_RAY_OBJECT_TO_WORLD_KHR] =
+   [SYSTEM_VALUE_RAY_OBJECT_TO_WORLD] =
       "float3x4 gl_ObjectToWorldEXT [[ray_object_to_world]]",
-   [SYSTEM_VALUE_RAY_WORLD_TO_OBJECT_KHR] =
+   [SYSTEM_VALUE_RAY_WORLD_TO_OBJECT] =
       "float3x4 gl_WorldToObjectEXT [[ray_world_to_object]]",
-   [SYSTEM_VALUE_HIT_KIND_KHR] =
+   [SYSTEM_VALUE_RAY_HIT_KIND] =
       "uint gl_HitKindEXT [[ray_hit_kind]]",
-   [SYSTEM_VALUE_RAY_GEOMETRY_INDEX_KHR] =
+   [SYSTEM_VALUE_RAY_GEOMETRY_INDEX] =
       "uint gl_PrimitiveID [[ray_geometry_index]]",
 };
 static const char *sysval_sample_mask_in_post_depth_coverage =

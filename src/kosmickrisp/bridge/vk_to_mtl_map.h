@@ -94,6 +94,8 @@ vk_resolve_mode_to_mtl_stencil_resolve_filter(
 
 enum mtl_index_type index_size_in_bytes_to_mtl_index_type(unsigned bytes);
 
+enum mtl_index_type vk_index_type_to_mtl_index_type(enum VkIndexType index_type);
+
 unsigned mtl_index_type_to_size_B(enum mtl_index_type type);
 
 const char *

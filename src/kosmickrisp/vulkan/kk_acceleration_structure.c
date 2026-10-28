@@ -136,24 +136,28 @@ translate_geometry(struct kk_device *dev,
    case VK_GEOMETRY_TYPE_TRIANGLES_KHR: {
       const VkAccelerationStructureGeometryTrianglesDataKHR *tri = &vk_geom->geometry.triangles;
 
-      mtl_geom->triangles.vertex_format = vk_format_to_mtl(tri->vertexFormat);
+      mtl_geom->triangles.vertex_format = vk_format_to_mtl_pixel_format(tri->vertexFormat);
       mtl_geom->triangles.vertex_stride = tri->vertexStride;
       mtl_geom->triangles.max_vertex = tri->maxVertex;
-      mtl_geom->triangles.index_type = vk_index_type_to_mtl(tri->indexType);
+      mtl_geom->triangles.index_type = vk_index_type_to_mtl_index_type(tri->indexType);
       mtl_geom->triangles.transform_data = tri->transformData;
 
-      /* TODO: Handle vertex buffer and index buffer */
+      /* Vertex and index data are VkDeviceAddress (GPU addresses) */
+      mtl_geom->triangles.vertex_buffer = tri->vertexData;
+      mtl_geom->triangles.index_buffer = tri->indexData;
       break;
    }
    case VK_GEOMETRY_TYPE_AABBS_KHR: {
       const VkAccelerationStructureGeometryAabbsDataKHR *aabbs = &vk_geom->geometry.aabbs;
 
       mtl_geom->aabbs.stride = aabbs->stride;
-      /* TODO: Handle AABB data */
+      mtl_geom->aabbs.aabb_buffer = aabbs->data;
       break;
    }
    case VK_GEOMETRY_TYPE_INSTANCES_KHR: {
-      /* TLAS instances */
+      const VkAccelerationStructureGeometryInstancesDataKHR *instances = &vk_geom->geometry.instances;
+      mtl_geom->instances.instance_buffer = instances->data;
+      mtl_geom->instances.instance_count = instances->arrayOfPointers ? 0 : 0; /* TODO: handle arrayOfPointers */
       break;
    }
    default:

@@ -98,8 +98,67 @@ mtl_acceleration_structure_encoder_build(mtl_acceleration_structure_command_enco
       desc.destinationAccelerationStructure = (id<MTLAccelerationStructure>)info->dst;
       desc.sourceAccelerationStructure = info->src ? (id<MTLAccelerationStructure>)info->src : nil;
 
-      // TODO: Set geometry descriptors from info->geometries and info->ranges
-      // This requires translating the Vulkan geometry structures to Metal
+      /* Translate geometry descriptors */
+      if (info->geometry_count > 0 && info->geometries) {
+         NSMutableArray *mtl_geometries = [NSMutableArray arrayWithCapacity:info->geometry_count];
+         for (uint32_t i = 0; i < info->geometry_count; i++) {
+            const struct mtl_acceleration_structure_geometry *geom = &info->geometries[i];
+            MTLAccelerationStructureGeometryDescriptor *mtl_geom = [MTLAccelerationStructureGeometryDescriptor new];
+            mtl_geom.type = (MTLAccelerationStructureGeometryType)geom->type;
+            mtl_geom.flags = (MTLAccelerationStructureGeometryFlags)geom->flags;
+
+            switch (geom->type) {
+            case MTL_ACCELERATION_STRUCTURE_GEOMETRY_TYPE_TRIANGLES: {
+               MTLAccelerationStructureTriangleGeometryDescriptor *tri_geom = [MTLAccelerationStructureTriangleGeometryDescriptor new];
+               tri_geom.vertexFormat = (MTLVertexFormat)geom->triangles.vertex_format;
+               tri_geom.vertexStride = geom->triangles.vertex_stride;
+               tri_geom.vertexBuffer = (id<MTLBuffer>)geom->triangles.vertex_buffer;
+               tri_geom.indexBuffer = geom->triangles.index_buffer ? (id<MTLBuffer>)geom->triangles.index_buffer : nil;
+               tri_geom.indexType = (MTLIndexType)geom->triangles.index_type;
+               tri_geom.vertexCount = geom->triangles.max_vertex + 1; /* max_vertex is max index, so count is max+1 */
+               if (geom->triangles.transform_data)
+                  tri_geom.transformBuffer = (id<MTLBuffer>)geom->triangles.transform_data;
+               mtl_geom = tri_geom;
+               break;
+            }
+            case MTL_ACCELERATION_STRUCTURE_GEOMETRY_TYPE_AABBS: {
+               MTLAccelerationStructureAABBGeometryDescriptor *aabb_geom = [MTLAccelerationStructureAABBGeometryDescriptor new];
+               aabb_geom.aabbBuffer = (id<MTLBuffer>)geom->aabbs.aabb_buffer;
+               aabb_geom.stride = geom->aabbs.stride;
+               mtl_geom = aabb_geom;
+               break;
+            }
+            case MTL_ACCELERATION_STRUCTURE_GEOMETRY_TYPE_INSTANCES: {
+               MTLAccelerationStructureInstanceGeometryDescriptor *inst_geom = [MTLAccelerationStructureInstanceGeometryDescriptor new];
+               inst_geom.instanceBuffer = (id<MTLBuffer>)geom->instances.instance_buffer;
+               inst_geom.instanceCount = geom->instances.instance_count;
+               mtl_geom = inst_geom;
+               break;
+            }
+            }
+
+            [mtl_geometries addObject:mtl_geom];
+         }
+         desc.geometryDescriptors = [mtl_geometries copy];
+      }
+
+      if (info->ranges) {
+         /* Build range descriptors */
+         NSMutableArray *mtl_ranges = [NSMutableArray arrayWithCapacity:info->geometry_count];
+         for (uint32_t i = 0; i < info->geometry_count; i++) {
+            const struct mtl_acceleration_structure_build_range *range = &info->ranges[i];
+            MTLAccelerationStructureBuildRangeDescriptor *mtl_range = [MTLAccelerationStructureBuildRangeDescriptor new];
+            mtl_range.primitiveCount = range->primitive_count;
+            mtl_range.primitiveOffset = range->primitive_offset;
+            mtl_range.firstVertex = range->first_vertex;
+            mtl_range.transformOffset = range->transform_offset;
+            [mtl_ranges addObject:mtl_range];
+         }
+         desc.buildRangeDescriptors = [mtl_ranges copy];
+      }
+
+      desc.flags = (MTLAccelerationStructureBuildFlags)info->flags;
+      desc.mode = (MTLAccelerationStructureBuildMode)info->mode;
 
       [enc buildAccelerationStructure:desc];
    }
