@@ -11,6 +11,7 @@
 #define KK_MTL_TYPES_H 1
 
 #include <stddef.h> /* For size_t definition */
+#include <stdint.h> /* For uint32_t, uint64_t */
 
 /** HANDLES */
 typedef void mtl_device;
@@ -47,6 +48,8 @@ typedef void mtl_argument_table_descriptor;
 typedef void mtl_argument_table;
 typedef void mtl_commit_options;
 typedef void mtl_counter_heap;
+typedef void mtl_acceleration_structure;
+typedef void mtl_acceleration_structure_command_encoder;
 
 struct mtl_feedback_data;
 typedef void (*mtl_feedback_handler_callback)(struct mtl_feedback_data *data);
@@ -179,6 +182,51 @@ enum mtl_texture_swizzle {
 enum mtl_index_type {
    MTL_INDEX_TYPE_UINT16 = 0,
    MTL_INDEX_TYPE_UINT32 = 1,
+};
+
+enum mtl_vertex_format {
+   MTL_VERTEX_FORMAT_INVALID = 0,
+   MTL_VERTEX_FORMAT_UCHAR2 = 1,
+   MTL_VERTEX_FORMAT_UCHAR3 = 2,
+   MTL_VERTEX_FORMAT_UCHAR4 = 3,
+   MTL_VERTEX_FORMAT_CHAR2 = 4,
+   MTL_VERTEX_FORMAT_CHAR3 = 5,
+   MTL_VERTEX_FORMAT_CHAR4 = 6,
+   MTL_VERTEX_FORMAT_UCHAR2_NORMALIZED = 7,
+   MTL_VERTEX_FORMAT_UCHAR3_NORMALIZED = 8,
+   MTL_VERTEX_FORMAT_UCHAR4_NORMALIZED = 9,
+   MTL_VERTEX_FORMAT_CHAR2_NORMALIZED = 10,
+   MTL_VERTEX_FORMAT_CHAR3_NORMALIZED = 11,
+   MTL_VERTEX_FORMAT_CHAR4_NORMALIZED = 12,
+   MTL_VERTEX_FORMAT_USHORT2 = 13,
+   MTL_VERTEX_FORMAT_USHORT3 = 14,
+   MTL_VERTEX_FORMAT_USHORT4 = 15,
+   MTL_VERTEX_FORMAT_SHORT2 = 16,
+   MTL_VERTEX_FORMAT_SHORT3 = 17,
+   MTL_VERTEX_FORMAT_SHORT4 = 18,
+   MTL_VERTEX_FORMAT_USHORT2_NORMALIZED = 19,
+   MTL_VERTEX_FORMAT_USHORT3_NORMALIZED = 20,
+   MTL_VERTEX_FORMAT_USHORT4_NORMALIZED = 21,
+   MTL_VERTEX_FORMAT_SHORT2_NORMALIZED = 22,
+   MTL_VERTEX_FORMAT_SHORT3_NORMALIZED = 23,
+   MTL_VERTEX_FORMAT_SHORT4_NORMALIZED = 24,
+   MTL_VERTEX_FORMAT_HALF2 = 25,
+   MTL_VERTEX_FORMAT_HALF3 = 26,
+   MTL_VERTEX_FORMAT_HALF4 = 27,
+   MTL_VERTEX_FORMAT_FLOAT = 28,
+   MTL_VERTEX_FORMAT_FLOAT2 = 29,
+   MTL_VERTEX_FORMAT_FLOAT3 = 30,
+   MTL_VERTEX_FORMAT_FLOAT4 = 31,
+   MTL_VERTEX_FORMAT_INT = 32,
+   MTL_VERTEX_FORMAT_INT2 = 33,
+   MTL_VERTEX_FORMAT_INT3 = 34,
+   MTL_VERTEX_FORMAT_INT4 = 35,
+   MTL_VERTEX_FORMAT_UINT = 36,
+   MTL_VERTEX_FORMAT_UINT2 = 37,
+   MTL_VERTEX_FORMAT_UINT3 = 38,
+   MTL_VERTEX_FORMAT_UINT4 = 39,
+   MTL_VERTEX_FORMAT_INT1010102_NORMALIZED = 40,
+   MTL_VERTEX_FORMAT_UINT1010102_NORMALIZED = 41,
 };
 
 enum mtl_sampler_address_mode {
@@ -322,6 +370,109 @@ enum mtl_math_floating_point_functions {
 enum mtl_language_version {
    MTL_LANGUAGE_VERSION_4_0 = 0x40000,
    MTL_LANGUAGE_VERSION_4_1 = 0x40001,
+};
+
+enum mtl_mesh_payload_type {
+   MTL_MESH_PAYLOAD_TYPE_NONE = 0,
+   MTL_MESH_PAYLOAD_TYPE_UINT32 = 1,
+};
+
+struct mtl_mesh_render_pipeline_descriptor {
+   mtl_render_pipeline_descriptor *base;
+   mtl_function_descriptor *object_function;
+   mtl_function_descriptor *mesh_function;
+   uint32_t max_total_threads_per_threadgroup;
+   uint32_t max_vertices_per_threadgroup;
+   uint32_t max_primitives_per_threadgroup;
+   enum mtl_mesh_payload_type payload_type;
+   size_t payload_stride;
+};
+
+enum mtl_acceleration_structure_type {
+   MTL_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL = 0,
+   MTL_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL = 1,
+   MTL_ACCELERATION_STRUCTURE_TYPE_GENERIC = 2,
+};
+
+enum mtl_acceleration_structure_build_mode {
+   MTL_ACCELERATION_STRUCTURE_BUILD_MODE_BUILD = 0,
+   MTL_ACCELERATION_STRUCTURE_BUILD_MODE_UPDATE = 1,
+};
+
+enum mtl_acceleration_structure_build_flags {
+   MTL_ACCELERATION_STRUCTURE_BUILD_FLAG_NONE = 0,
+   MTL_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_UPDATE = 1 << 0,
+   MTL_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_COMPACTION = 1 << 1,
+   MTL_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE = 1 << 2,
+   MTL_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_BUILD = 1 << 3,
+   MTL_ACCELERATION_STRUCTURE_BUILD_FLAG_LOW_MEMORY = 1 << 4,
+};
+
+enum mtl_acceleration_structure_geometry_type {
+   MTL_ACCELERATION_STRUCTURE_GEOMETRY_TYPE_TRIANGLES = 0,
+   MTL_ACCELERATION_STRUCTURE_GEOMETRY_TYPE_AABBS = 1,
+   MTL_ACCELERATION_STRUCTURE_GEOMETRY_TYPE_INSTANCES = 2,
+};
+
+enum mtl_acceleration_structure_geometry_flags {
+   MTL_ACCELERATION_STRUCTURE_GEOMETRY_FLAG_NONE = 0,
+   MTL_ACCELERATION_STRUCTURE_GEOMETRY_FLAG_OPAQUE = 1 << 0,
+   MTL_ACCELERATION_STRUCTURE_GEOMETRY_FLAG_NO_DUPLICATE_ANY_HIT_INVOCATION = 1 << 1,
+};
+
+enum mtl_copy_acceleration_structure_mode {
+   MTL_COPY_ACCELERATION_STRUCTURE_MODE_CLONE = 0,
+   MTL_COPY_ACCELERATION_STRUCTURE_MODE_COMPACT = 1,
+   MTL_COPY_ACCELERATION_STRUCTURE_MODE_SERIALIZE = 2,
+   MTL_COPY_ACCELERATION_STRUCTURE_MODE_DESERIALIZE = 3,
+};
+
+struct mtl_acceleration_structure_geometry_triangles {
+   enum mtl_vertex_format vertex_format;
+   size_t vertex_stride;
+   uint32_t max_vertex;
+   enum mtl_index_type index_type;
+   uint64_t vertex_buffer;
+   uint64_t index_buffer;
+   uint64_t transform_data;
+};
+
+struct mtl_acceleration_structure_geometry_aabbs {
+   size_t stride;
+   uint64_t aabb_buffer;
+};
+
+struct mtl_acceleration_structure_geometry_instances {
+   uint64_t instance_buffer;
+   uint32_t instance_count;
+};
+
+struct mtl_acceleration_structure_geometry {
+   enum mtl_acceleration_structure_geometry_type type;
+   enum mtl_acceleration_structure_geometry_flags flags;
+   union {
+      struct mtl_acceleration_structure_geometry_triangles triangles;
+      struct mtl_acceleration_structure_geometry_aabbs aabbs;
+      struct mtl_acceleration_structure_geometry_instances instances;
+   };
+};
+
+struct mtl_acceleration_structure_build_range {
+   uint32_t primitive_count;
+   uint32_t primitive_offset;
+   uint32_t first_vertex;
+   uint32_t transform_offset;
+};
+
+struct mtl_acceleration_structure_build_info {
+   enum mtl_acceleration_structure_type type;
+   enum mtl_acceleration_structure_build_mode mode;
+   enum mtl_acceleration_structure_build_flags flags;
+   mtl_acceleration_structure *dst;
+   mtl_acceleration_structure *src;
+   uint32_t geometry_count;
+   const struct mtl_acceleration_structure_geometry *geometries;
+   const struct mtl_acceleration_structure_build_range *ranges;
 };
 
 /** STRUCTURES */

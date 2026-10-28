@@ -36,6 +36,24 @@
 #include "mtl_sync.h"
 #include "mtl_texture.h"
 
+mtl_acceleration_structure *mtl_acceleration_structure_create(mtl_device *device,
+                                                              enum mtl_acceleration_structure_type type,
+                                                              size_t size);
+void mtl_acceleration_structure_encoder_build(mtl_acceleration_structure_command_encoder *encoder,
+                                              const struct mtl_acceleration_structure_build_info *info);
+void mtl_acceleration_structure_encoder_copy(mtl_acceleration_structure_command_encoder *encoder,
+                                             mtl_acceleration_structure *dst,
+                                             mtl_acceleration_structure *src,
+                                             enum mtl_copy_acceleration_structure_mode mode);
+void mtl_acceleration_structure_encoder_copy_to_buffer(mtl_acceleration_structure_command_encoder *encoder,
+                                                       mtl_acceleration_structure *src,
+                                                       void *dst);
+void mtl_acceleration_structure_encoder_copy_from_buffer(mtl_acceleration_structure_command_encoder *encoder,
+                                                         mtl_acceleration_structure *dst,
+                                                         const void *src);
+mtl_acceleration_structure_command_encoder *mtl_new_acceleration_structure_command_encoder(mtl_command_buffer *cmd_buffer);
+uint64_t mtl_acceleration_structure_get_gpu_address(mtl_acceleration_structure *as);
+
 mtl_texture *mtl_drawable_get_texture(void *drawable_ptr);
 
 void *mtl_retain(void *handle);

@@ -555,3 +555,29 @@ void mtl_render_set_stencil_store_action(mtl_render_encoder *encoder,
         [enc setStencilStoreAction:(MTLStoreAction)action];
     }
 }
+
+/* Mesh Shader */
+void
+mtl_draw_mesh_threadgroups(mtl_render_encoder *encoder,
+                           struct mtl_size threadgroups_per_grid,
+                           struct mtl_size threads_per_object_threadgroup)
+{
+   @autoreleasepool {
+      id<MTL4RenderCommandEncoder> enc = (id<MTL4RenderCommandEncoder>)encoder;
+      MTLSize grid = MTLSizeMake(threadgroups_per_grid.x, threadgroups_per_grid.y, threadgroups_per_grid.z);
+      MTLSize threadgroup = MTLSizeMake(threads_per_object_threadgroup.x, threads_per_object_threadgroup.y, threads_per_object_threadgroup.z);
+      [enc drawMeshThreadgroups:grid threadsPerObjectThreadgroup:threadgroup];
+   }
+}
+
+void
+mtl_draw_mesh_threadgroups_indirect(mtl_render_encoder *encoder,
+                                    uint64_t indirect_buffer,
+                                    uint64_t indirect_offset)
+{
+   @autoreleasepool {
+      id<MTL4RenderCommandEncoder> enc = (id<MTL4RenderCommandEncoder>)encoder;
+      [enc drawMeshThreadgroupsWithIndirectBuffer:(id<MTLBuffer>)indirect_buffer
+                                    indirectBufferOffset:indirect_offset];
+   }
+}

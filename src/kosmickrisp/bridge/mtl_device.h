@@ -12,6 +12,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <Foundation/Foundation.h>
 
 /* TODO_KOSMICKRISP Remove */
 struct kk_image_layout;
@@ -68,5 +69,11 @@ mtl_buffer *mtl_new_buffer_with_bytes_no_copy(mtl_device *device, void *ptr,
                                               uint64_t size_B);
 mtl_command_allocator *mtl_new_command_allocator(mtl_device *device);
 mtl_command_buffer *mtl_new_command_buffer(mtl_device *device);
+
+/* Mesh Shader */
+mtl_render_pipeline_state *
+mtl_new_mesh_render_pipeline_state(mtl_device *device,
+                                   struct mtl_mesh_render_pipeline_descriptor *desc,
+                                   NSError **error);
 
 #endif /* MTL_DEVICE_H */

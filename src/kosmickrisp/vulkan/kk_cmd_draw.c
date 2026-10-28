@@ -2695,3 +2695,65 @@ kk_CmdDrawIndexedIndirectCount2KHR(VkCommandBuffer commandBuffer,
 
    kk_draw(cmd, &data);
 }
+
+/* Mesh Shader */
+VKAPI_ATTR void VKAPI_CALL
+kk_CmdDrawMeshTasksEXT(VkCommandBuffer commandBuffer,
+                       uint32_t groupCountX, uint32_t groupCountY,
+                       uint32_t groupCountZ)
+{
+   VK_FROM_HANDLE(kk_cmd_buffer, cmd, commandBuffer);
+
+   /* Ensure render pass is started if needed */
+   if (cmd->state.gfx.need_to_start_render_pass)
+      cs_start_render(cmd);
+
+   struct kk_rendering_state *render = &cmd->state.gfx.render;
+   mtl_render_encoder *encoder = cmd->state.gfx.encoder;
+
+   struct mtl_size threadgroups_per_grid = {
+      .x = groupCountX,
+      .y = groupCountY,
+      .z = groupCountZ,
+   };
+
+   /* For mesh shaders, the object threadgroup size is typically 32 */
+   struct mtl_size threads_per_object_threadgroup = {
+      .x = 32,
+      .y = 1,
+      .z = 1,
+   };
+
+   mtl_draw_mesh_threadgroups(encoder, threadgroups_per_grid, threads_per_object_threadgroup);
+}
+
+VKAPI_ATTR void VKAPI_CALL
+kk_CmdDrawMeshTasksIndirectEXT(VkCommandBuffer commandBuffer,
+                               VkBuffer buffer, VkDeviceSize offset)
+{
+   VK_FROM_HANDLE(kk_cmd_buffer, cmd, commandBuffer);
+   VK_FROM_HANDLE(kk_buffer, buf, buffer);
+
+   if (cmd->state.gfx.need_to_start_render_pass)
+      cs_start_render(cmd);
+
+   mtl_render_encoder *encoder = cmd->state.gfx.encoder;
+   uint64_t indirect_buffer = buf->bo->map + offset;
+
+   mtl_draw_mesh_threadgroups_indirect(encoder, indirect_buffer, 0);
+}
+
+VKAPI_ATTR void VKAPI_CALL
+kk_CmdDrawMeshTasksIndirectCountEXT(VkCommandBuffer commandBuffer,
+                                    VkBuffer buffer, VkDeviceSize offset,
+                                    VkBuffer countBuffer, VkDeviceSize countBufferOffset,
+                                    uint32_t maxDrawCount)
+{
+   /* TODO: Implement indirect count */
+   (void)commandBuffer;
+   (void)buffer;
+   (void)offset;
+   (void)countBuffer;
+   (void)countBufferOffset;
+   (void)maxDrawCount;
+}

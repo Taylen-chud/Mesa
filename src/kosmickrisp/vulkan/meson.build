@@ -112,6 +112,8 @@ kk_files = files(
   'kk_sync.c',
   'kk_wsi.h',
   'kk_wsi.c',
+  'kk_acceleration_structure.h',
+  'kk_acceleration_structure.c',
 )
 
 kk_entrypoints = custom_target(

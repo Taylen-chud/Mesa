@@ -19,6 +19,15 @@ get_stage_string(mesa_shader_stage stage)
       return "fragment";
    case MESA_SHADER_COMPUTE:
    case MESA_SHADER_TESS_CTRL:
+   case MESA_SHADER_MESH:
+   case MESA_SHADER_TASK:
+      return "kernel";
+   case MESA_SHADER_RAYGEN:
+   case MESA_SHADER_ANY_HIT:
+   case MESA_SHADER_CLOSEST_HIT:
+   case MESA_SHADER_MISS:
+   case MESA_SHADER_INTERSECTION:
+   case MESA_SHADER_CALLABLE:
       return "kernel";
    default:
       assert(0);
@@ -66,6 +75,40 @@ static const char *sysval_table[SYSTEM_VALUE_MAX] = {
    [SYSTEM_VALUE_AMPLIFICATION_ID_KK] =
       "uint mtl_AmplificationID [[amplification_id]]",
    [SYSTEM_VALUE_FIRST_VERTEX] = "uint gl_FirstVertex [[base_vertex]]",
+   /* Mesh Shader system values */
+   [SYSTEM_VALUE_MESH_WORKGROUP_SIZE] =
+      "uint gl_MeshWorkgroupSize [[threads_per_simdgroup]]",
+   [SYSTEM_VALUE_MESH_VERTEX_COUNT] =
+      "uint gl_MeshVerticesPerPrimitive [[vertices_per_primitive]]",
+   [SYSTEM_VALUE_TASK_WORKGROUP_SIZE] =
+      "uint gl_TaskWorkgroupSize [[threads_per_simdgroup]]",
+   /* Ray Tracing system values */
+   [SYSTEM_VALUE_RAY_LAUNCH_ID_KHR] =
+      "uint3 gl_LaunchIDEXT [[ray_launch_id]]",
+   [SYSTEM_VALUE_RAY_LAUNCH_SIZE_KHR] =
+      "uint3 gl_LaunchSizeEXT [[ray_launch_size]]",
+   [SYSTEM_VALUE_RAY_WORLD_ORIGIN_KHR] =
+      "float3 gl_WorldRayOriginEXT [[ray_world_origin]]",
+   [SYSTEM_VALUE_RAY_WORLD_DIRECTION_KHR] =
+      "float3 gl_WorldRayDirectionEXT [[ray_world_direction]]",
+   [SYSTEM_VALUE_RAY_OBJECT_ORIGIN_KHR] =
+      "float3 gl_ObjectRayOriginEXT [[ray_object_origin]]",
+   [SYSTEM_VALUE_RAY_OBJECT_DIRECTION_KHR] =
+      "float3 gl_ObjectRayDirectionEXT [[ray_object_direction]]",
+   [SYSTEM_VALUE_RAY_T_MIN_KHR] =
+      "float gl_RayTminEXT [[ray_tmin]]",
+   [SYSTEM_VALUE_RAY_T_MAX_KHR] =
+      "float gl_RayTmaxEXT [[ray_tmax]]",
+   [SYSTEM_VALUE_RAY_INSTANCE_CUSTOM_INDEX_KHR] =
+      "uint gl_InstanceCustomIndexEXT [[ray_instance_custom_index]]",
+   [SYSTEM_VALUE_RAY_OBJECT_TO_WORLD_KHR] =
+      "float3x4 gl_ObjectToWorldEXT [[ray_object_to_world]]",
+   [SYSTEM_VALUE_RAY_WORLD_TO_OBJECT_KHR] =
+      "float3x4 gl_WorldToObjectEXT [[ray_world_to_object]]",
+   [SYSTEM_VALUE_HIT_KIND_KHR] =
+      "uint gl_HitKindEXT [[ray_hit_kind]]",
+   [SYSTEM_VALUE_RAY_GEOMETRY_INDEX_KHR] =
+      "uint gl_PrimitiveID [[ray_geometry_index]]",
 };
 static const char *sysval_sample_mask_in_post_depth_coverage =
    "uint gl_SampleMask [[sample_mask, post_depth_coverage]]";
@@ -97,6 +140,12 @@ emit_inputs(struct nir_to_msl_ctx *ctx, nir_shader *shader)
    case MESA_SHADER_FRAGMENT:
       P_IND(ctx, "FragmentIn in [[stage_in]],\n");
       break;
+   case MESA_SHADER_MESH:
+      P_IND(ctx, "MeshIn in [[stage_in]],\n");
+      break;
+   case MESA_SHADER_TASK:
+      P_IND(ctx, "TaskIn in [[stage_in]],\n");
+      break;
    default:
       break;
    }
@@ -118,6 +167,15 @@ output_type(nir_shader *shader)
       return "VertexOut";
    case MESA_SHADER_FRAGMENT:
       return "FragmentOut";
+   case MESA_SHADER_MESH:
+   case MESA_SHADER_TASK:
+   case MESA_SHADER_RAYGEN:
+   case MESA_SHADER_ANY_HIT:
+   case MESA_SHADER_CLOSEST_HIT:
+   case MESA_SHADER_MISS:
+   case MESA_SHADER_INTERSECTION:
+   case MESA_SHADER_CALLABLE:
+      return "void";
    default:
       return "void";
    }

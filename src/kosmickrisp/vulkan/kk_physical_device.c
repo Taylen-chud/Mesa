@@ -16,6 +16,7 @@
 #include "kk_wsi.h"
 
 #include "kosmickrisp/bridge/mtl_bridge.h"
+#include "kosmickrisp/bridge/mtl_types.h"
 #include "kosmickrisp/bridge/ns_process_info.h"
 #include "kosmickrisp/compiler/nir_to_msl.h"
 
@@ -148,6 +149,15 @@ kk_get_device_extensions(const struct kk_instance *instance,
       .KHR_maintenance8 = true,
       .KHR_maintenance9 = true,
       .KHR_maintenance10 = true,
+      /* Ray Tracing extensions */
+      .KHR_acceleration_structure = pdev->info.gpu_apple_family >= 7, /* A14+ */
+      .KHR_ray_tracing_pipeline = pdev->info.gpu_apple_family >= 7,
+      .KHR_ray_query = pdev->info.gpu_apple_family >= 7,
+      .KHR_pipeline_library = true,
+      /* Mesh Shader extension - Metal 3+ (MSL 4.0+ in our versioning) */
+      .EXT_mesh_shader = pdev->info.gpu_apple_family >= 7 && pdev->info.msl_version >= MTL_LANGUAGE_VERSION_4_0,
+      /* Fragment Shading Rate */
+      .KHR_fragment_shading_rate = pdev->info.gpu_apple_family >= 7,
 #ifdef KK_USE_WSI_PLATFORM
       .KHR_present_id = true,
       .KHR_present_id2 = true,
@@ -516,6 +526,36 @@ kk_get_device_features(
 
       /* EXT_ycbcr_2plane_444_formats */
       .ycbcr2plane444Formats = true,
+
+      /* VK_KHR_acceleration_structure */
+      .accelerationStructure = supported_extensions->KHR_acceleration_structure,
+      .accelerationStructureCaptureReplay = false,
+      .accelerationStructureIndirectBuild = false,
+      .accelerationStructureHostCommands = false,
+      .descriptorBindingAccelerationStructureUpdateAfterBind =
+         supported_extensions->KHR_acceleration_structure,
+
+      /* VK_KHR_ray_tracing_pipeline */
+      .rayTracingPipeline = supported_extensions->KHR_ray_tracing_pipeline,
+      .rayTracingPipelineShaderGroupHandleCaptureReplay = false,
+      .rayTracingPipelineShaderGroupHandleCaptureReplayMixed = false,
+      .rayTracingPipelineTraceRaysIndirect = true,
+      .rayTraversalPrimitiveCulling = true,
+
+      /* VK_KHR_ray_query */
+      .rayQuery = supported_extensions->KHR_ray_query,
+
+      /* VK_EXT_mesh_shader */
+      .meshShader = supported_extensions->EXT_mesh_shader,
+      .taskShader = supported_extensions->EXT_mesh_shader,
+      .multiviewMeshShader = false,
+      .primitiveFragmentShadingRateMeshShader = false,
+      .meshShaderQueries = false,
+
+      /* VK_KHR_fragment_shading_rate */
+      .pipelineFragmentShadingRate = supported_extensions->KHR_fragment_shading_rate,
+      .primitiveFragmentShadingRate = supported_extensions->KHR_fragment_shading_rate,
+      .attachmentFragmentShadingRate = supported_extensions->KHR_fragment_shading_rate,
    };
 }
 
@@ -896,6 +936,55 @@ kk_get_device_properties(
 
       /* VK_KHR_fragment_shader_barycentric */
       .triStripVertexOrderIndependentOfProvokingVertex = false,
+
+      /* VK_KHR_acceleration_structure */
+      .maxAccelerationStructureCount = UINT32_MAX,
+      .maxAccelerationStructureSize = UINT64_MAX,
+      .maxAccelerationStructureInstanceCount = UINT32_MAX,
+      .maxAccelerationStructureGeometryCount = UINT32_MAX,
+      .maxAccelerationStructureBuildInputCount = UINT32_MAX,
+      .maxAccelerationStructureBuildInputPrimitiveCount = UINT32_MAX,
+      .maxAccelerationStructureBuildInputTriangleCount = UINT32_MAX,
+      .maxAccelerationStructureBuildInputAABBCount = UINT32_MAX,
+      .minAccelerationStructureScratchOffsetAlignment = 128,
+
+      /* VK_KHR_ray_tracing_pipeline */
+      .maxRayRecursionDepth = 31,
+      .maxShaderGroupHandleSize = 32,
+      .maxRayDispatchInvocationCount = 1 << 24,
+      .shaderGroupHandleAlignment = 32,
+      .maxRayHitAttributeSize = 32,
+
+      /* VK_KHR_ray_query */
+      .maxRayQueryRecursionDepth = 31,
+
+      /* VK_EXT_mesh_shader */
+      .maxTaskWorkGroupCount = {65535, 65535, 65535},
+      .maxTaskWorkGroupSize = {1024, 1024, 64},
+      .maxTaskTotalMemorySize = 32768,
+      .maxTaskOutputCount = 65535,
+      .maxMeshWorkGroupCount = {65535, 65535, 65535},
+      .maxMeshWorkGroupSize = {128, 128, 128},
+      .maxMeshTotalMemorySize = 28672,
+      .maxMeshOutputVertices = 256,
+      .maxMeshOutputPrimitives = 512,
+      .maxMeshMultiviewViewCount = 0,
+      .maxMeshOutputLayers = 0,
+      .meshOutputPerVertexGranularity = 1,
+      .meshOutputPerPrimitiveGranularity = 1,
+      .maxPreferredTaskWorkGroupInvocations = 32,
+      .maxPreferredMeshWorkGroupInvocations = 128,
+
+      /* VK_KHR_fragment_shading_rate */
+      .minFragmentShadingRateAttachmentTexelSize = {8, 8},
+      .maxFragmentShadingRateAttachmentTexelSize = {8, 8},
+      .maxFragmentShadingRateAttachmentTexelSizeAspectRatio = 1,
+      .primitiveFragmentShadingRateWithMultipleViewports = false,
+      .layeredShadingRateAttachmentAccess = false,
+      .fragmentShadingRateNonTrivialCombinerOps = true,
+      .maxFragmentSize = {4, 4},
+      .maxFragmentShadingRateAttachmentSize = {0, 0},
+      .maxFragmentShadingRateInvocationCount = 16,
    };
 
    char gpu_name[256u];
