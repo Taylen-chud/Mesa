@@ -43,7 +43,7 @@ vk_as_type_to_mtl(VkAccelerationStructureTypeKHR type)
    case VK_ACCELERATION_STRUCTURE_TYPE_GENERIC_KHR:
       return MTL_ACCELERATION_STRUCTURE_TYPE_GENERIC;
    default:
-      unreachable("Invalid acceleration structure type");
+      UNREACHABLE("Invalid acceleration structure type");
    }
 }
 
@@ -77,6 +77,39 @@ vk_build_flags_to_mtl(VkBuildAccelerationStructureFlagsKHR flags)
    if (flags & VK_BUILD_ACCELERATION_STRUCTURE_LOW_MEMORY_BIT_KHR)
       mtl_flags |= MTL_ACCELERATION_STRUCTURE_BUILD_FLAG_LOW_MEMORY;
    return mtl_flags;
+}
+
+/* Helper functions for geometry type and flag translation */
+static enum mtl_acceleration_structure_geometry_type
+vk_as_geometry_type_to_mtl(VkGeometryTypeKHR type)
+{
+   switch (type) {
+   case VK_GEOMETRY_TYPE_TRIANGLES_KHR:
+      return MTL_ACCELERATION_STRUCTURE_GEOMETRY_TYPE_TRIANGLES;
+   case VK_GEOMETRY_TYPE_AABBS_KHR:
+      return MTL_ACCELERATION_STRUCTURE_GEOMETRY_TYPE_AABBS;
+   case VK_GEOMETRY_TYPE_INSTANCES_KHR:
+      return MTL_ACCELERATION_STRUCTURE_GEOMETRY_TYPE_INSTANCES;
+   default:
+      return MTL_ACCELERATION_STRUCTURE_GEOMETRY_TYPE_TRIANGLES;
+   }
+}
+
+static enum mtl_acceleration_structure_geometry_flags
+vk_geometry_flags_to_mtl(VkGeometryFlagsKHR flags)
+{
+   enum mtl_acceleration_structure_geometry_flags mtl_flags = 0;
+   if (flags & VK_GEOMETRY_OPAQUE_BIT_KHR)
+      mtl_flags |= MTL_ACCELERATION_STRUCTURE_GEOMETRY_FLAG_OPAQUE;
+   if (flags & VK_GEOMETRY_NO_DUPLICATE_ANY_HIT_INVOCATION_BIT_KHR)
+      mtl_flags |= MTL_ACCELERATION_STRUCTURE_GEOMETRY_FLAG_NO_DUPLICATE_ANY_HIT_INVOCATION;
+   return mtl_flags;
+}
+
+static uint64_t
+vk_device_or_host_address_to_uint64(const VkDeviceOrHostAddressConstKHR addr)
+{
+   return addr.deviceAddress;
 }
 
 VkResult
@@ -145,20 +178,20 @@ translate_geometry(struct kk_device *dev,
       mtl_geom->triangles.transform_data = tri->transformData;
 
       /* Vertex and index data are VkDeviceAddress (GPU addresses) */
-      mtl_geom->triangles.vertex_buffer = tri->vertexData;
-      mtl_geom->triangles.index_buffer = tri->indexData;
+      mtl_geom->triangles.vertex_buffer = vk_device_or_host_address_to_uint64(tri->vertexData);
+      mtl_geom->triangles.index_buffer = vk_device_or_host_address_to_uint64(tri->indexData);
       break;
    }
    case VK_GEOMETRY_TYPE_AABBS_KHR: {
       const VkAccelerationStructureGeometryAabbsDataKHR *aabbs = &vk_geom->geometry.aabbs;
 
       mtl_geom->aabbs.stride = aabbs->stride;
-      mtl_geom->aabbs.aabb_buffer = aabbs->data;
+      mtl_geom->aabbs.aabb_buffer = vk_device_or_host_address_to_uint64(aabbs->data);
       break;
    }
    case VK_GEOMETRY_TYPE_INSTANCES_KHR: {
       const VkAccelerationStructureGeometryInstancesDataKHR *instances = &vk_geom->geometry.instances;
-      mtl_geom->instances.instance_buffer = instances->data;
+      mtl_geom->instances.instance_buffer = vk_device_or_host_address_to_uint64(instances->data);
       mtl_geom->instances.instance_count = instances->arrayOfPointers ? 0 : 0; /* TODO: handle arrayOfPointers */
       break;
    }
@@ -185,7 +218,7 @@ kk_acceleration_structure_build(struct kk_cmd_buffer *cmd,
    mtl_info.geometry_count = info->geometry_count;
 
    struct mtl_acceleration_structure_geometry *mtl_geoms =
-      ralloc_array(cmd->vk.alloc, struct mtl_acceleration_structure_geometry,
+      ralloc_array(cmd, struct mtl_acceleration_structure_geometry,
                    info->geometry_count);
    if (!mtl_geoms)
       return VK_ERROR_OUT_OF_HOST_MEMORY;
@@ -202,7 +235,7 @@ kk_acceleration_structure_build(struct kk_cmd_buffer *cmd,
    mtl_info.ranges = info->ranges;
 
    mtl_acceleration_structure_command_encoder *as_encoder =
-      mtl_new_acceleration_structure_command_encoder(cmd->cmd_buffer);
+      mtl_new_acceleration_structure_command_encoder(cmd->metal.cmd_buf);
    if (!as_encoder) {
       ralloc_free(mtl_geoms);
       return VK_ERROR_OUT_OF_DEVICE_MEMORY;
@@ -226,7 +259,7 @@ kk_acceleration_structure_copy(struct kk_cmd_buffer *cmd,
    struct kk_device *dev = kk_cmd_buffer_device(cmd);
 
    mtl_acceleration_structure_command_encoder *as_encoder =
-      mtl_new_acceleration_structure_command_encoder(cmd->cmd_buffer);
+      mtl_new_acceleration_structure_command_encoder(cmd->metal.cmd_buf);
    if (!as_encoder)
       return VK_ERROR_OUT_OF_DEVICE_MEMORY;
 
@@ -299,12 +332,12 @@ kk_cmd_copy_acceleration_structure_to_memory(struct kk_cmd_buffer *cmd,
    VK_FROM_HANDLE(kk_buffer, dst, pInfo->dst.buffer);
 
    mtl_acceleration_structure_command_encoder *as_encoder =
-      mtl_new_acceleration_structure_command_encoder(cmd->cmd_buffer);
+      mtl_new_acceleration_structure_command_encoder(cmd->metal.cmd_buf);
    if (!as_encoder)
       return;
 
    mtl_acceleration_structure_encoder_copy_to_buffer(as_encoder, src->mtl_as,
-                                                      dst->bo->map + pInfo->dst.offset);
+                                                      dst->metal.handle + pInfo->dst.offset);
    mtl_end_encoding(as_encoder);
 }
 
@@ -316,12 +349,12 @@ kk_cmd_copy_memory_to_acceleration_structure(struct kk_cmd_buffer *cmd,
    VK_FROM_HANDLE(kk_acceleration_structure, dst, pInfo->dst);
 
    mtl_acceleration_structure_command_encoder *as_encoder =
-      mtl_new_acceleration_structure_command_encoder(cmd->cmd_buffer);
+      mtl_new_acceleration_structure_command_encoder(cmd->metal.cmd_buf);
    if (!as_encoder)
       return;
 
    mtl_acceleration_structure_encoder_copy_from_buffer(as_encoder, dst->mtl_as,
-                                                        src->bo->map + pInfo->src.offset);
+                                                        src->metal.handle + pInfo->src.offset);
    mtl_end_encoding(as_encoder);
 }
 
@@ -356,35 +389,11 @@ kk_acceleration_structure_get_build_size(struct kk_device *dev,
 VkResult
 kk_acceleration_structure_get_capture_replay_data(struct kk_device *dev,
                                                   struct kk_acceleration_structure *as,
-                                                  VkAccelerationStructureCaptureReplayDataKHR *pData)
+                                                  void *pData)
 {
    /* TODO: Implement capture/replay */
+   (void)dev;
+   (void)as;
+   (void)pData;
    return VK_ERROR_FEATURE_NOT_PRESENT;
-}
-
-/* Helper functions for geometry type and flag translation */
-static enum mtl_acceleration_structure_geometry_type
-vk_as_geometry_type_to_mtl(VkGeometryTypeKHR type)
-{
-   switch (type) {
-   case VK_GEOMETRY_TYPE_TRIANGLES_KHR:
-      return MTL_ACCELERATION_STRUCTURE_GEOMETRY_TYPE_TRIANGLES;
-   case VK_GEOMETRY_TYPE_AABBS_KHR:
-      return MTL_ACCELERATION_STRUCTURE_GEOMETRY_TYPE_AABBS;
-   case VK_GEOMETRY_TYPE_INSTANCES_KHR:
-      return MTL_ACCELERATION_STRUCTURE_GEOMETRY_TYPE_INSTANCES;
-   default:
-      return MTL_ACCELERATION_STRUCTURE_GEOMETRY_TYPE_TRIANGLES;
-   }
-}
-
-static enum mtl_acceleration_structure_geometry_flags
-vk_geometry_flags_to_mtl(VkGeometryFlagsKHR flags)
-{
-   enum mtl_acceleration_structure_geometry_flags mtl_flags = 0;
-   if (flags & VK_GEOMETRY_OPAQUE_BIT_KHR)
-      mtl_flags |= MTL_ACCELERATION_STRUCTURE_GEOMETRY_FLAG_OPAQUE;
-   if (flags & VK_GEOMETRY_NO_DUPLICATE_ANY_HIT_INVOCATION_BIT_KHR)
-      mtl_flags |= MTL_ACCELERATION_STRUCTURE_GEOMETRY_FLAG_NO_DUPLICATE_ANY_HIT_INVOCATION;
-   return mtl_flags;
 }

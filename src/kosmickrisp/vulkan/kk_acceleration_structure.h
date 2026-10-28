@@ -95,6 +95,6 @@ kk_acceleration_structure_get_build_size(struct kk_device *dev,
 VkResult
 kk_acceleration_structure_get_capture_replay_data(struct kk_device *dev,
                                                   struct kk_acceleration_structure *as,
-                                                  VkAccelerationStructureCaptureReplayDataKHR *pData);
+                                                  void *pData);
 
 #endif

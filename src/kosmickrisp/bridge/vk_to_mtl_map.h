@@ -6,26 +6,13 @@
 #ifndef KK_MTL_TO_VK_MAP_H
 #define KK_MTL_TO_VK_MAP_H 1
 
+#include "mtl_types.h"
+#include "mtl_format.h"
+
 #include <vulkan/vulkan.h>
 
 struct mtl_origin;
 struct mtl_size;
-enum mtl_primitive_type;
-enum mtl_primitive_topology_class;
-enum mtl_load_action;
-enum mtl_store_action;
-enum mtl_sampler_address_mode;
-enum mtl_sampler_border_color;
-enum mtl_sampler_min_mag_filter;
-enum mtl_sampler_mip_filter;
-enum mtl_sampler_reduction_mode;
-enum mtl_compare_function;
-enum mtl_winding;
-enum mtl_cull_mode;
-enum mtl_index_type;
-enum mtl_command_queue_error;
-enum mtl_depth_resolve_filter;
-enum mtl_stencil_resolve_filter;
 
 struct VkOffset3D;
 struct VkExtent3D;
@@ -102,5 +89,11 @@ unsigned mtl_index_type_to_size_B(enum mtl_index_type type);
 
 const char *
 mtl_command_queue_error_to_string(enum mtl_command_queue_error error);
+
+enum mtl_pixel_format
+vk_format_to_mtl_pixel_format(VkFormat format);
+
+enum mtl_vertex_format
+vk_format_to_mtl_vertex_format(VkFormat format);
 
 #endif /* KK_MTL_TO_VK_MAP_H */
