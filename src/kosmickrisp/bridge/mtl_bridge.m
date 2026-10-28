@@ -64,10 +64,13 @@ mtl_acceleration_structure_create(mtl_device *device,
       // Note: MTLAccelerationStructureDescriptor in iOS 26 doesn't have a 'type' property
       // The type might be inferred from the build descriptor or set differently
       // For now, we create the structure without explicit type
+      // Set size on descriptor if available (Metal 4)
+      if ([desc respondsToSelector:@selector(setSize:)]) {
+         [desc setSize:size];
+      }
 
       NSError *nsError = nil;
       id<MTLAccelerationStructure> as = [dev newAccelerationStructureWithDescriptor:desc
-                                                                       compactSize:&size
                                                                            error:&nsError];
       if (error)
          *error = (kk_mtl_error_t)nsError;
