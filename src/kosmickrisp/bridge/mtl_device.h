@@ -12,7 +12,14 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-#include <Foundation/Foundation.h>
+
+/* Forward declare Objective-C types for C compatibility */
+#ifdef __OBJC__
+#import <Foundation/Foundation.h>
+#else
+/* Opaque pointer for NSError - compatible with C */
+typedef struct NSError NSError;
+#endif
 
 /* TODO_KOSMICKRISP Remove */
 struct kk_image_layout;

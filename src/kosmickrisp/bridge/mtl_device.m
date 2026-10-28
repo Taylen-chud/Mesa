@@ -7,6 +7,7 @@
 #include "mtl_device.h"
 
 #include <TargetConditionals.h>
+#include <Foundation/Foundation.h>
 
 /* TODO_KOSMICKRISP Remove */
 #include "kk_image_layout.h"
