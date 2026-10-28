@@ -13,13 +13,10 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-/* Forward declare Objective-C types for C compatibility */
-#ifdef __OBJC__
-#import <Foundation/Foundation.h>
-#else
-/* Opaque pointer for NSError - compatible with C */
+/* Forward declare Objective-C types for C compatibility.
+ * Do NOT import Foundation/Foundation.h in this header - it's included by C files.
+ * The implementation file (mtl_device.m) imports Foundation. */
 typedef struct NSError NSError;
-#endif
 
 /* TODO_KOSMICKRISP Remove */
 struct kk_image_layout;
