@@ -12,6 +12,7 @@
 
 #include "util/macros.h"
 
+#include <string.h>
 #include <Metal/MTLCommandBuffer.h>
 #include <Metal/MTLCommandQueue.h>
 #include <Metal/MTLDevice.h>
@@ -158,7 +159,10 @@ mtl_acceleration_structure_get_gpu_address(mtl_acceleration_structure *as)
    @autoreleasepool {
       id<MTLAccelerationStructure> mtl_as = (id<MTLAccelerationStructure>)as;
       MTLResourceID resource_id = mtl_as.gpuResourceID;
-      // MTLResourceID is a struct with a single uint64_t field
-      return resource_id.value;
+      // MTLResourceID is a struct of size 8 bytes (checked by static_assert)
+      // Use memcpy to safely extract the uint64_t value
+      uint64_t value;
+      memcpy(&value, &resource_id, sizeof(value));
+      return value;
    }
 }

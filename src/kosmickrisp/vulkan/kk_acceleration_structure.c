@@ -329,15 +329,16 @@ kk_cmd_copy_acceleration_structure_to_memory(struct kk_cmd_buffer *cmd,
                                              const VkCopyAccelerationStructureToMemoryInfoKHR *pInfo)
 {
    VK_FROM_HANDLE(kk_acceleration_structure, src, pInfo->src);
-   VK_FROM_HANDLE(kk_buffer, dst, pInfo->dst.buffer);
 
    mtl_acceleration_structure_command_encoder *as_encoder =
       mtl_new_acceleration_structure_command_encoder(cmd->metal.cmd_buf);
    if (!as_encoder)
       return;
 
+   /* dst is a VkDeviceOrHostAddressKHR union - use deviceAddress directly */
+   uint64_t dst_addr = pInfo->dst.deviceAddress;
    mtl_acceleration_structure_encoder_copy_to_buffer(as_encoder, src->mtl_as,
-                                                      dst->metal.handle + pInfo->dst.offset);
+                                                      (void *)dst_addr);
    mtl_end_encoding(as_encoder);
 }
 
@@ -345,7 +346,6 @@ void
 kk_cmd_copy_memory_to_acceleration_structure(struct kk_cmd_buffer *cmd,
                                              const VkCopyMemoryToAccelerationStructureInfoKHR *pInfo)
 {
-   VK_FROM_HANDLE(kk_buffer, src, pInfo->src.buffer);
    VK_FROM_HANDLE(kk_acceleration_structure, dst, pInfo->dst);
 
    mtl_acceleration_structure_command_encoder *as_encoder =
@@ -353,8 +353,10 @@ kk_cmd_copy_memory_to_acceleration_structure(struct kk_cmd_buffer *cmd,
    if (!as_encoder)
       return;
 
+   /* src is a VkDeviceOrHostAddressConstKHR union - use deviceAddress directly */
+   uint64_t src_addr = pInfo->src.deviceAddress;
    mtl_acceleration_structure_encoder_copy_from_buffer(as_encoder, dst->mtl_as,
-                                                        src->metal.handle + pInfo->src.offset);
+                                                        (const void *)src_addr);
    mtl_end_encoding(as_encoder);
 }
 
