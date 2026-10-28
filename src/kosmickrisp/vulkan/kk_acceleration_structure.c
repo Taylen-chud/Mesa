@@ -28,6 +28,8 @@
 #include "vk_device.h"
 #include "vk_log.h"
 #include "vk_format.h"
+#include "vk_object.h"
+#include "util/macros.h"
 
 /* Metal acceleration structure type mapping */
 static enum mtl_acceleration_structure_type
@@ -47,7 +49,7 @@ vk_as_type_to_mtl(VkAccelerationStructureTypeKHR type)
 
 /* Metal acceleration structure build mode mapping */
 static enum mtl_acceleration_structure_build_mode
-vk_build_mode_to_mtl(VkAccelerationStructureBuildModeKHR mode)
+vk_build_mode_to_mtl(VkBuildAccelerationStructureModeKHR mode)
 {
    switch (mode) {
    case VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR:
@@ -55,7 +57,7 @@ vk_build_mode_to_mtl(VkAccelerationStructureBuildModeKHR mode)
    case VK_BUILD_ACCELERATION_STRUCTURE_MODE_UPDATE_KHR:
       return MTL_ACCELERATION_STRUCTURE_BUILD_MODE_UPDATE;
    default:
-      unreachable("Invalid build mode");
+      UNREACHABLE("Invalid build mode");
    }
 }
 
@@ -64,15 +66,15 @@ static enum mtl_acceleration_structure_build_flags
 vk_build_flags_to_mtl(VkBuildAccelerationStructureFlagsKHR flags)
 {
    enum mtl_acceleration_structure_build_flags mtl_flags = 0;
-   if (flags & VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_KHR)
+   if (flags & VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR)
       mtl_flags |= MTL_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_UPDATE;
-   if (flags & VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_COMPACTION_KHR)
+   if (flags & VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_COMPACTION_BIT_KHR)
       mtl_flags |= MTL_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_COMPACTION;
-   if (flags & VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_KHR)
+   if (flags & VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR)
       mtl_flags |= MTL_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_TRACE;
-   if (flags & VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_BUILD_KHR)
+   if (flags & VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_BUILD_BIT_KHR)
       mtl_flags |= MTL_ACCELERATION_STRUCTURE_BUILD_FLAG_PREFER_FAST_BUILD;
-   if (flags & VK_BUILD_ACCELERATION_STRUCTURE_LOW_MEMORY_KHR)
+   if (flags & VK_BUILD_ACCELERATION_STRUCTURE_LOW_MEMORY_BIT_KHR)
       mtl_flags |= MTL_ACCELERATION_STRUCTURE_BUILD_FLAG_LOW_MEMORY;
    return mtl_flags;
 }
@@ -86,8 +88,8 @@ kk_acceleration_structure_create(struct kk_device *dev,
    struct kk_physical_device *pdev = kk_device_physical(dev);
 
    struct kk_acceleration_structure *as =
-      vk_acceleration_structure_zalloc(&dev->vk, pCreateInfo, pAllocator,
-                                       sizeof(*as));
+      vk_object_zalloc(&dev->vk, pAllocator, sizeof(*as),
+                       VK_OBJECT_TYPE_ACCELERATION_STRUCTURE_KHR);
    if (!as)
       return VK_ERROR_OUT_OF_HOST_MEMORY;
 
@@ -99,7 +101,7 @@ kk_acceleration_structure_create(struct kk_device *dev,
                                                    mtl_type,
                                                    pCreateInfo->size);
    if (!as->mtl_as) {
-      vk_acceleration_structure_free(&dev->vk, pAllocator, &as->vk);
+      vk_object_free(&dev->vk, pAllocator, as);
       return VK_ERROR_OUT_OF_DEVICE_MEMORY;
    }
 
@@ -119,7 +121,7 @@ kk_acceleration_structure_destroy(struct kk_device *dev,
       return;
 
    mtl_release(as->mtl_as);
-   vk_acceleration_structure_free(&dev->vk, pAllocator, &as->vk);
+   vk_object_free(&dev->vk, pAllocator, as);
 }
 
 static VkResult

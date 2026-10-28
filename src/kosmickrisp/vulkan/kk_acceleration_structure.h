@@ -30,7 +30,7 @@ VK_DEFINE_HANDLE_CASTS(kk_acceleration_structure, vk.base,
 struct kk_acceleration_structure_build_info {
    VkAccelerationStructureTypeKHR type;
    VkBuildAccelerationStructureFlagsKHR flags;
-   VkAccelerationStructureBuildModeKHR mode;
+   VkBuildAccelerationStructureModeKHR mode;
    VkAccelerationStructureKHR src;
    VkAccelerationStructureKHR dst;
    uint32_t geometry_count;

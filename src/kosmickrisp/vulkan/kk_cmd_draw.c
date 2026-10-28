@@ -2709,7 +2709,7 @@ kk_CmdDrawMeshTasksEXT(VkCommandBuffer commandBuffer,
       cs_start_render(cmd);
 
    struct kk_rendering_state *render = &cmd->state.gfx.render;
-   mtl_render_encoder *encoder = cmd->state.gfx.encoder;
+   mtl_render_encoder *encoder = cmd->metal.render;
 
    struct mtl_size threadgroups_per_grid = {
       .x = groupCountX,
@@ -2729,7 +2729,8 @@ kk_CmdDrawMeshTasksEXT(VkCommandBuffer commandBuffer,
 
 VKAPI_ATTR void VKAPI_CALL
 kk_CmdDrawMeshTasksIndirectEXT(VkCommandBuffer commandBuffer,
-                               VkBuffer buffer, VkDeviceSize offset)
+                               VkBuffer buffer, VkDeviceSize offset,
+                               uint32_t drawCount, uint32_t stride)
 {
    VK_FROM_HANDLE(kk_cmd_buffer, cmd, commandBuffer);
    VK_FROM_HANDLE(kk_buffer, buf, buffer);
@@ -2737,8 +2738,8 @@ kk_CmdDrawMeshTasksIndirectEXT(VkCommandBuffer commandBuffer,
    if (cmd->state.gfx.need_to_start_render_pass)
       cs_start_render(cmd);
 
-   mtl_render_encoder *encoder = cmd->state.gfx.encoder;
-   uint64_t indirect_buffer = buf->bo->map;
+   mtl_render_encoder *encoder = cmd->metal.render;
+   uint64_t indirect_buffer = (uint64_t)buf->metal.handle;
 
    mtl_draw_mesh_threadgroups_indirect(encoder, indirect_buffer, offset);
 }
@@ -2747,7 +2748,7 @@ VKAPI_ATTR void VKAPI_CALL
 kk_CmdDrawMeshTasksIndirectCountEXT(VkCommandBuffer commandBuffer,
                                     VkBuffer buffer, VkDeviceSize offset,
                                     VkBuffer countBuffer, VkDeviceSize countBufferOffset,
-                                    uint32_t maxDrawCount)
+                                    uint32_t maxDrawCount, uint32_t stride)
 {
    /* TODO: Implement indirect count */
    (void)commandBuffer;
@@ -2756,4 +2757,5 @@ kk_CmdDrawMeshTasksIndirectCountEXT(VkCommandBuffer commandBuffer,
    (void)countBuffer;
    (void)countBufferOffset;
    (void)maxDrawCount;
+   (void)stride;
 }
