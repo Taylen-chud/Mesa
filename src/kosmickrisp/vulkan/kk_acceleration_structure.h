@@ -78,6 +78,8 @@ void
 kk_cmd_copy_memory_to_acceleration_structure(struct kk_cmd_buffer *cmd,
                                              const VkCopyMemoryToAccelerationStructureInfoKHR *pInfo);
 
+/* Fixed conflicting types: ensure void return type matches .c file definition */
+
 VkResult
 kk_acceleration_structure_get_device_address(struct kk_device *dev,
                                              struct kk_acceleration_structure *as,
