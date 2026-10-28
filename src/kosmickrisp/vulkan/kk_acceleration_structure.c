@@ -130,9 +130,11 @@ kk_acceleration_structure_create(struct kk_device *dev,
       vk_as_type_to_mtl(pCreateInfo->type);
 
    /* Create Metal acceleration structure */
+   kk_mtl_error_t error = nil;
    as->mtl_as = mtl_acceleration_structure_create(dev->mtl_handle,
                                                    mtl_type,
-                                                   pCreateInfo->size);
+                                                   pCreateInfo->size,
+                                                   &error);
    if (!as->mtl_as) {
       vk_object_free(&dev->vk, pAllocator, as);
       return VK_ERROR_OUT_OF_DEVICE_MEMORY;

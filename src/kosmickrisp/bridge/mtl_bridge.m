@@ -54,7 +54,8 @@ mtl_release(void *handle)
 mtl_acceleration_structure *
 mtl_acceleration_structure_create(mtl_device *device,
                                   enum mtl_acceleration_structure_type type,
-                                  size_t size)
+                                  size_t size,
+                                  kk_mtl_error_t *error)
 {
    @autoreleasepool {
       id<MTLDevice> dev = (id<MTLDevice>)device;
@@ -64,8 +65,12 @@ mtl_acceleration_structure_create(mtl_device *device,
       // The type might be inferred from the build descriptor or set differently
       // For now, we create the structure without explicit type
 
+      NSError *nsError = nil;
       id<MTLAccelerationStructure> as = [dev newAccelerationStructureWithDescriptor:desc
-                                                                       compactSize:&size];
+                                                                       compactSize:&size
+                                                                           error:&nsError];
+      if (error)
+         *error = (kk_mtl_error_t)nsError;
       return (mtl_acceleration_structure *)as;
    }
 }

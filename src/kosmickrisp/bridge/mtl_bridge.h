@@ -38,7 +38,8 @@
 
 mtl_acceleration_structure *mtl_acceleration_structure_create(mtl_device *device,
                                                               enum mtl_acceleration_structure_type type,
-                                                              size_t size);
+                                                              size_t size,
+                                                              kk_mtl_error_t *error);
 void mtl_acceleration_structure_encoder_build(mtl_acceleration_structure_command_encoder *encoder,
                                               const struct mtl_acceleration_structure_build_info *info);
 void mtl_acceleration_structure_encoder_copy(mtl_acceleration_structure_command_encoder *encoder,
