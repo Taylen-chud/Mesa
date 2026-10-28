@@ -2738,7 +2738,7 @@ kk_CmdDrawMeshTasksIndirectEXT(VkCommandBuffer commandBuffer,
       cs_start_render(cmd);
 
    mtl_render_encoder *encoder = cmd->state.gfx.encoder;
-   uint64_t indirect_buffer = buf->bo->map + offset;
+   uint64_t indirect_buffer = buf->bo->map;
 
    mtl_draw_mesh_threadgroups_indirect(encoder, indirect_buffer, offset);
 }
