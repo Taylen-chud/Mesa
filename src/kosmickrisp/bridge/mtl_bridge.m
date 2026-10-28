@@ -18,6 +18,7 @@
 #include <Metal/MTLDevice.h>
 #include <Metal/MTLHeap.h>
 #include <Metal/MTLEvent.h>
+#include <Metal/MTLAccelerationStructure.h>
 #include <Metal/MTL4AccelerationStructure.h>
 
 #include <QuartzCore/CAMetalLayer.h>
@@ -58,8 +59,6 @@ mtl_acceleration_structure_create(mtl_device *device,
                                   kk_mtl_error_t *error)
 {
    @autoreleasepool {
-      // Try MTL4Device first (Metal 4), fall back to MTLDevice
-      id<MTL4Device> dev4 = (id<MTL4Device>)device;
       id<MTLDevice> dev = (id<MTLDevice>)device;
 
       MTL4AccelerationStructureDescriptor *desc = [MTL4AccelerationStructureDescriptor new];
@@ -77,11 +76,7 @@ mtl_acceleration_structure_create(mtl_device *device,
       id<MTLAccelerationStructure> as = nil;
 
       // Try various method signatures for Metal 4
-      if ([dev4 respondsToSelector:@selector(newAccelerationStructureWithDescriptor:error:)]) {
-         as = [dev4 newAccelerationStructureWithDescriptor:desc error:&nsError];
-      } else if ([dev4 respondsToSelector:@selector(newAccelerationStructureWithDescriptor:size:error:)]) {
-         as = [dev4 newAccelerationStructureWithDescriptor:desc size:size error:&nsError];
-      } else if ([dev respondsToSelector:@selector(newAccelerationStructureWithDescriptor:error:)]) {
+      if ([dev respondsToSelector:@selector(newAccelerationStructureWithDescriptor:error:)]) {
          as = [dev newAccelerationStructureWithDescriptor:desc error:&nsError];
       } else if ([dev respondsToSelector:@selector(newAccelerationStructureWithDescriptor:size:error:)]) {
          as = [dev newAccelerationStructureWithDescriptor:desc size:size error:&nsError];
@@ -102,15 +97,11 @@ mtl_acceleration_structure_command_encoder *
 mtl_new_acceleration_structure_command_encoder(mtl_command_buffer *cmd_buffer)
 {
    @autoreleasepool {
-      id<MTL4CommandBuffer> cmd4 = (id<MTL4CommandBuffer>)cmd_buffer;
       id<MTLCommandBuffer> cmd = (id<MTLCommandBuffer>)cmd_buffer;
 
       id encoder = nil;
 
-      // Try MTL4 command buffer first
-      if ([cmd4 respondsToSelector:@selector(accelerationStructureCommandEncoder)]) {
-         encoder = [cmd4 accelerationStructureCommandEncoder];
-      } else if ([cmd respondsToSelector:@selector(accelerationStructureCommandEncoder)]) {
+      if ([cmd respondsToSelector:@selector(accelerationStructureCommandEncoder)]) {
          encoder = [cmd accelerationStructureCommandEncoder];
       } else {
          fprintf(stderr, "Error: accelerationStructureCommandEncoder not available\n");
@@ -126,7 +117,6 @@ mtl_acceleration_structure_encoder_build(mtl_acceleration_structure_command_enco
                                          const struct mtl_acceleration_structure_build_info *info)
 {
    @autoreleasepool {
-      id<MTL4AccelerationStructureCommandEncoder> enc4 = (id<MTL4AccelerationStructureCommandEncoder>)encoder;
       id<MTLAccelerationStructureCommandEncoder> enc = (id<MTLAccelerationStructureCommandEncoder>)encoder;
 
       // Try to create build descriptor
@@ -141,9 +131,7 @@ mtl_acceleration_structure_encoder_build(mtl_acceleration_structure_command_enco
          // This is a placeholder - full implementation requires MTL4 API
          (void)info;
 
-         if ([enc4 respondsToSelector:@selector(buildAccelerationStructure:)]) {
-            [enc4 buildAccelerationStructure:buildDesc];
-         } else if ([enc respondsToSelector:@selector(buildAccelerationStructure:)]) {
+         if ([enc respondsToSelector:@selector(buildAccelerationStructure:)]) {
             [enc buildAccelerationStructure:buildDesc];
          } else {
             fprintf(stderr, "Warning: buildAccelerationStructure: not available\n");
@@ -163,7 +151,6 @@ mtl_acceleration_structure_encoder_copy(mtl_acceleration_structure_command_encod
                                         enum mtl_copy_acceleration_structure_mode mode)
 {
    @autoreleasepool {
-      id<MTL4AccelerationStructureCommandEncoder> enc4 = (id<MTL4AccelerationStructureCommandEncoder>)encoder;
       id<MTLAccelerationStructureCommandEncoder> enc = (id<MTLAccelerationStructureCommandEncoder>)encoder;
 
       // MTLAccelerationStructureCopyMode enum not available in iOS 26 SDK
@@ -171,15 +158,7 @@ mtl_acceleration_structure_encoder_copy(mtl_acceleration_structure_command_encod
       NSUInteger mtl_mode = mode;
 
       // Try various copy method signatures
-      if ([enc4 respondsToSelector:@selector(copyAccelerationStructure:toAccelerationStructure:mode:)]) {
-         [enc4 copyAccelerationStructure:(id<MTLAccelerationStructure>)dst
-                       toAccelerationStructure:(id<MTLAccelerationStructure>)src
-                                          mode:mtl_mode];
-      } else if ([enc4 respondsToSelector:@selector(copyAccelerationStructure:sourceAccelerationStructure:mode:)]) {
-         [enc4 copyAccelerationStructure:(id<MTLAccelerationStructure>)dst
-                     sourceAccelerationStructure:(id<MTLAccelerationStructure>)src
-                                                  mode:mtl_mode];
-      } else if ([enc respondsToSelector:@selector(copyAccelerationStructure:toAccelerationStructure:mode:)]) {
+      if ([enc respondsToSelector:@selector(copyAccelerationStructure:toAccelerationStructure:mode:)]) {
          [enc copyAccelerationStructure:(id<MTLAccelerationStructure>)dst
                        toAccelerationStructure:(id<MTLAccelerationStructure>)src
                                           mode:mtl_mode];
@@ -199,15 +178,10 @@ mtl_acceleration_structure_encoder_copy_to_buffer(mtl_acceleration_structure_com
                                                   void *dst)
 {
    @autoreleasepool {
-      id<MTL4AccelerationStructureCommandEncoder> enc4 = (id<MTL4AccelerationStructureCommandEncoder>)encoder;
       id<MTLAccelerationStructureCommandEncoder> enc = (id<MTLAccelerationStructureCommandEncoder>)encoder;
 
       // Try various copy to buffer method signatures
-      if ([enc4 respondsToSelector:@selector(copyAccelerationStructure:toBuffer:offset:)]) {
-         [enc4 copyAccelerationStructure:(id<MTLAccelerationStructure>)src
-                              toBuffer:(id<MTLBuffer>)dst
-                                offset:0];
-      } else if ([enc respondsToSelector:@selector(copyAccelerationStructure:toBuffer:offset:)]) {
+      if ([enc respondsToSelector:@selector(copyAccelerationStructure:toBuffer:offset:)]) {
          [enc copyAccelerationStructure:(id<MTLAccelerationStructure>)src
                           toBuffer:(id<MTLBuffer>)dst
                             offset:0];
@@ -223,15 +197,10 @@ mtl_acceleration_structure_encoder_copy_from_buffer(mtl_acceleration_structure_c
                                                     const void *src)
 {
    @autoreleasepool {
-      id<MTL4AccelerationStructureCommandEncoder> enc4 = (id<MTL4AccelerationStructureCommandEncoder>)encoder;
       id<MTLAccelerationStructureCommandEncoder> enc = (id<MTLAccelerationStructureCommandEncoder>)encoder;
 
       // Try various copy from buffer method signatures
-      if ([enc4 respondsToSelector:@selector(copyBuffer:toAccelerationStructure:offset:)]) {
-         [enc4 copyBuffer:(id<MTLBuffer>)src
-             toAccelerationStructure:(id<MTLAccelerationStructure>)dst
-                           offset:0];
-      } else if ([enc respondsToSelector:@selector(copyBuffer:toAccelerationStructure:offset:)]) {
+      if ([enc respondsToSelector:@selector(copyBuffer:toAccelerationStructure:offset:)]) {
          [enc copyBuffer:(id<MTLBuffer>)src
              toAccelerationStructure:(id<MTLAccelerationStructure>)dst
                            offset:0];

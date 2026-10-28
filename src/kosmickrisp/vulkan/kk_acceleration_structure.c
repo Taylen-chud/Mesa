@@ -173,11 +173,11 @@ translate_geometry(struct kk_device *dev,
    case VK_GEOMETRY_TYPE_TRIANGLES_KHR: {
       const VkAccelerationStructureGeometryTrianglesDataKHR *tri = &vk_geom->geometry.triangles;
 
-      mtl_geom->triangles.vertex_format = vk_format_to_mtl_pixel_format(tri->vertexFormat);
+      mtl_geom->triangles.vertex_format = vk_format_to_mtl_vertex_format(tri->vertexFormat);
       mtl_geom->triangles.vertex_stride = tri->vertexStride;
       mtl_geom->triangles.max_vertex = tri->maxVertex;
       mtl_geom->triangles.index_type = vk_index_type_to_mtl_index_type(tri->indexType);
-      mtl_geom->triangles.transform_data = tri->transformData;
+      mtl_geom->triangles.transform_data = vk_device_or_host_address_to_uint64(tri->transformData);
 
       /* Vertex and index data are VkDeviceAddress (GPU addresses) */
       mtl_geom->triangles.vertex_buffer = vk_device_or_host_address_to_uint64(tri->vertexData);
@@ -234,7 +234,7 @@ kk_acceleration_structure_build(struct kk_cmd_buffer *cmd,
    }
 
    mtl_info.geometries = mtl_geoms;
-   mtl_info.ranges = info->ranges;
+   mtl_info.ranges = (const struct mtl_acceleration_structure_build_range *)info->ranges;
 
    mtl_acceleration_structure_command_encoder *as_encoder =
       mtl_new_acceleration_structure_command_encoder(cmd->metal.cmd_buf);

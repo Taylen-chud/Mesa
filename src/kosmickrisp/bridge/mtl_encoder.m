@@ -6,10 +6,10 @@
 
 #include "mtl_encoder.h"
 
-#include <Metal/MTL4CommandBuffer.h>
-#include <Metal/MTL4ComputeCommandEncoder.h>
-#include <Metal/MTL4Counters.h>
-#include <Metal/MTL4RenderCommandEncoder.h>
+#include <Metal/MTLCommandBuffer.h>
+#include <Metal/MTLComputeCommandEncoder.h>
+#include <Metal/MTLCounterHeap.h>
+#include <Metal/MTLRenderCommandEncoder.h>
 #include <Metal/MTLRenderPass.h>
 
 /* Common encoder utils */
@@ -17,7 +17,7 @@ void
 mtl_end_encoding(void *encoder)
 {
    @autoreleasepool {
-      id<MTL4CommandEncoder> enc = (id<MTL4CommandEncoder>)encoder;
+      id<MTLCommandEncoder> enc = (id<MTLCommandEncoder>)encoder;
       [enc endEncoding];
    }
 }
@@ -27,11 +27,11 @@ mtl_barrier_after_stages(void *encoder, enum mtl_stages after_stages,
                          enum mtl_stages before_queue_stages)
 {
    @autoreleasepool {
-      id<MTL4CommandEncoder> enc = (id<MTL4CommandEncoder>)encoder;
+      id<MTLCommandEncoder> enc = (id<MTLCommandEncoder>)encoder;
       /* TODO_KOSMICKRISP Expose visibility option since resource alias should only be required
        * if occlusion queries are used */
       [enc barrierAfterStages:(MTLStages)after_stages beforeQueueStages:(MTLStages)before_queue_stages
-           visibilityOptions:MTL4VisibilityOptionResourceAlias];
+           visibilityOptions:MTLVisibilityOptionResourceAlias];
    }
 }
 
@@ -40,9 +40,9 @@ mtl_barrier_after_encoder_stages(void *encoder, enum mtl_stages after_stages,
                                  enum mtl_stages before_queue_stages)
 {
    @autoreleasepool {
-      id<MTL4CommandEncoder> enc = (id<MTL4CommandEncoder>)encoder;
+      id<MTLCommandEncoder> enc = (id<MTLCommandEncoder>)encoder;
       [enc barrierAfterEncoderStages:(MTLStages)after_stages beforeEncoderStages:(MTLStages)before_queue_stages
-           visibilityOptions:MTL4VisibilityOptionResourceAlias];
+           visibilityOptions:MTLVisibilityOptionResourceAlias];
    }
 }
 
@@ -52,10 +52,10 @@ mtl_barrier_after_queue_stages(void *encoder,
                                enum mtl_stages before_stages)
 {
    @autoreleasepool {
-      id<MTL4CommandEncoder> enc = (id<MTL4CommandEncoder>)encoder;
+      id<MTLCommandEncoder> enc = (id<MTLCommandEncoder>)encoder;
       [enc barrierAfterQueueStages:(MTLStages)after_queue_stages
                       beforeStages:(MTLStages)before_stages
-                 visibilityOptions:MTL4VisibilityOptionResourceAlias];
+                 visibilityOptions:MTLVisibilityOptionResourceAlias];
    }
 }
 
@@ -63,7 +63,7 @@ void
 mtl_update_fence(void *encoder, mtl_fence *fence, enum mtl_stages after_stages)
 {
    @autoreleasepool {
-      id<MTL4CommandEncoder> enc = (id<MTL4CommandEncoder>)encoder;
+      id<MTLCommandEncoder> enc = (id<MTLCommandEncoder>)encoder;
       id<MTLFence> f = (id<MTLFence>)fence;
       [enc updateFence:f afterEncoderStages:(MTLStages)after_stages];
    }
@@ -74,7 +74,7 @@ mtl_wait_for_fence(void *encoder, mtl_fence *fence,
                    enum mtl_stages before_stages)
 {
    @autoreleasepool {
-      id<MTL4CommandEncoder> enc = (id<MTL4CommandEncoder>)encoder;
+      id<MTLCommandEncoder> enc = (id<MTLCommandEncoder>)encoder;
       id<MTLFence> f = (id<MTLFence>)fence;
       [enc waitForFence:f beforeEncoderStages:(MTLStages)before_stages];
    }
@@ -84,7 +84,7 @@ void
 mtl_encoder_set_label(void *encoder, const char *label)
 {
    @autoreleasepool {
-      id<MTL4CommandEncoder> enc = (id<MTL4CommandEncoder>)encoder;
+      id<MTLCommandEncoder> enc = (id<MTLCommandEncoder>)encoder;
       enc.label = @(label);
    }
 }
@@ -93,7 +93,7 @@ void
 mtl_encoder_insert_debug_signpost(void *encoder, const char *label)
 {
    @autoreleasepool {
-      id<MTL4CommandEncoder> enc = (id<MTL4CommandEncoder>)encoder;
+      id<MTLCommandEncoder> enc = (id<MTLCommandEncoder>)encoder;
       [enc insertDebugSignpost:@(label)];
    }
 }
@@ -102,7 +102,7 @@ void
 mtl_encoder_push_debug_group(void *encoder, const char *label)
 {
    @autoreleasepool {
-      id<MTL4CommandEncoder> enc = (id<MTL4CommandEncoder>)encoder;
+      id<MTLCommandEncoder> enc = (id<MTLCommandEncoder>)encoder;
       [enc pushDebugGroup:@(label)];
    }
 }
@@ -111,7 +111,7 @@ void
 mtl_encoder_pop_debug_group(void *encoder)
 {
    @autoreleasepool {
-      id<MTL4CommandEncoder> enc = (id<MTL4CommandEncoder>)encoder;
+      id<MTLCommandEncoder> enc = (id<MTLCommandEncoder>)encoder;
       [enc popDebugGroup];
    }
 }
@@ -121,7 +121,7 @@ mtl_compute_encoder *
 mtl_new_compute_command_encoder(mtl_command_buffer *cmd_buffer)
 {
    @autoreleasepool {
-      id<MTL4CommandBuffer> cmd_buf = (id<MTL4CommandBuffer>)cmd_buffer;
+      id<MTLCommandBuffer> cmd_buf = (id<MTLCommandBuffer>)cmd_buffer;
       return [[cmd_buf computeCommandEncoder] retain];
    }
 }
@@ -133,7 +133,7 @@ mtl_copy_from_buffer_to_buffer(mtl_compute_encoder *encoder,
                                size_t size)
 {
    @autoreleasepool {
-      id<MTL4ComputeCommandEncoder> enc = (id<MTL4ComputeCommandEncoder>)encoder;
+      id<MTLComputeCommandEncoder> enc = (id<MTLComputeCommandEncoder>)encoder;
       id<MTLBuffer> mtl_src_buffer = (id<MTLBuffer>)src_buf;
       id<MTLBuffer> mtl_dst_buffer = (id<MTLBuffer>)dst_buf;
       [enc copyFromBuffer:mtl_src_buffer sourceOffset:src_offset toBuffer:mtl_dst_buffer destinationOffset:dst_offset size:size];
@@ -147,7 +147,7 @@ mtl_copy_from_buffer_to_texture(mtl_compute_encoder *encoder,
    @autoreleasepool {
       const MTLSize size = MTLSizeMake(data->image_size.x, data->image_size.y, data->image_size.z);
       const MTLOrigin origin = MTLOriginMake(data->image_origin.x, data->image_origin.y, data->image_origin.z);
-      id<MTL4ComputeCommandEncoder> enc = (id<MTL4ComputeCommandEncoder>)encoder;
+      id<MTLComputeCommandEncoder> enc = (id<MTLComputeCommandEncoder>)encoder;
       id<MTLBuffer> buffer = (id<MTLBuffer>)data->buffer;
       id<MTLTexture> image = (id<MTLTexture>)data->image;
       [enc copyFromBuffer:buffer
@@ -170,7 +170,7 @@ mtl_copy_from_texture_to_buffer(mtl_compute_encoder *encoder,
    @autoreleasepool {
       const MTLSize size = MTLSizeMake(data->image_size.x, data->image_size.y, data->image_size.z);
       const MTLOrigin origin = MTLOriginMake(data->image_origin.x, data->image_origin.y, data->image_origin.z);
-      id<MTL4ComputeCommandEncoder> enc = (id<MTL4ComputeCommandEncoder>)encoder;
+      id<MTLComputeCommandEncoder> enc = (id<MTLComputeCommandEncoder>)encoder;
       id<MTLBuffer> buffer = (id<MTLBuffer>)data->buffer;
       id<MTLTexture> image = (id<MTLTexture>)data->image;
       [enc copyFromTexture:image
@@ -199,7 +199,7 @@ mtl_copy_from_texture_to_texture(mtl_compute_encoder *encoder,
       MTLSize mtl_src_size = MTLSizeMake(src_size.x, src_size.y, src_size.z);
       MTLOrigin mtl_dst_origin = MTLOriginMake(dst_origin.x, dst_origin.y, dst_origin.z);
       id<MTLTexture> mtl_dst_tex = (id<MTLTexture>)dst_tex_handle;
-      id<MTL4ComputeCommandEncoder> enc = (id<MTL4ComputeCommandEncoder>)encoder;
+      id<MTLComputeCommandEncoder> enc = (id<MTLComputeCommandEncoder>)encoder;
       id<MTLTexture> mtl_src_tex = (id<MTLTexture>)src_tex_handle;
       [enc copyFromTexture:mtl_src_tex
                sourceSlice:src_slice
@@ -218,7 +218,7 @@ mtl_compute_set_pipeline_state(mtl_compute_encoder *encoder,
                                mtl_compute_pipeline_state *state_handle)
 {
    @autoreleasepool {
-      id<MTL4ComputeCommandEncoder> enc = (id<MTL4ComputeCommandEncoder>)encoder;
+      id<MTLComputeCommandEncoder> enc = (id<MTLComputeCommandEncoder>)encoder;
       id<MTLComputePipelineState> state = (id<MTLComputePipelineState>)state_handle;
       [enc setComputePipelineState:state];
    }
@@ -229,8 +229,8 @@ mtl_compute_set_argument_table(mtl_compute_encoder *encoder,
                                mtl_argument_table *table)
 {
    @autoreleasepool {
-      id<MTL4ComputeCommandEncoder> enc = (id<MTL4ComputeCommandEncoder>)encoder;
-      id<MTL4ArgumentTable> t = (id<MTL4ArgumentTable>)table;
+      id<MTLComputeCommandEncoder> enc = (id<MTLComputeCommandEncoder>)encoder;
+      id<MTLArgumentTable> t = (id<MTLArgumentTable>)table;
       [enc setArgumentTable:t];
    }
 }
@@ -240,7 +240,7 @@ mtl_dispatch_threads(mtl_compute_encoder *encoder,
                      struct mtl_size grid_size, struct mtl_size local_size)
 {
    @autoreleasepool {
-      id<MTL4ComputeCommandEncoder> enc = (id<MTL4ComputeCommandEncoder>)encoder;
+      id<MTLComputeCommandEncoder> enc = (id<MTLComputeCommandEncoder>)encoder;
       MTLSize thread_count = MTLSizeMake(grid_size.x, grid_size.y, grid_size.z);
       MTLSize threads_per_threadgroup = MTLSizeMake(local_size.x, local_size.y,
                                                     local_size.z);
@@ -255,7 +255,7 @@ mtl_dispatch_threadgroups_with_indirect_buffer(mtl_compute_encoder *encoder,
                                                struct mtl_size local_size)
 {
    @autoreleasepool {
-      id<MTL4ComputeCommandEncoder> enc = (id<MTL4ComputeCommandEncoder>)encoder;
+      id<MTLComputeCommandEncoder> enc = (id<MTLComputeCommandEncoder>)encoder;
       MTLSize threads_per_threadgroup = MTLSizeMake(local_size.x,
                                                     local_size.y,
                                                     local_size.z);
@@ -269,7 +269,7 @@ mtl_dispatch_threads_with_indirect_buffer(mtl_compute_encoder *encoder,
                                           uint64_t addr)
 {
    @autoreleasepool {
-      id<MTL4ComputeCommandEncoder> enc = (id<MTL4ComputeCommandEncoder>)encoder;
+      id<MTLComputeCommandEncoder> enc = (id<MTLComputeCommandEncoder>)encoder;
       [enc dispatchThreadsWithIndirectBuffer:addr];
    }
 }
@@ -282,8 +282,8 @@ mtl_new_render_command_encoder_with_descriptor(
    mtl_command_buffer *command_buffer, mtl_render_pass_descriptor *descriptor)
 {
    @autoreleasepool {
-      id<MTL4CommandBuffer> cmd = (id<MTL4CommandBuffer>)command_buffer;
-      MTL4RenderPassDescriptor *desc = (MTL4RenderPassDescriptor *)descriptor;
+      id<MTLCommandBuffer> cmd = (id<MTLCommandBuffer>)command_buffer;
+      MTLRenderPassDescriptor *desc = (MTLRenderPassDescriptor *)descriptor;
       return [[cmd renderCommandEncoderWithDescriptor:desc] retain];
    }
 }
@@ -293,7 +293,7 @@ mtl_set_viewports(mtl_render_encoder *encoder, struct mtl_viewport *viewports,
                   uint32_t count)
 {
    @autoreleasepool {
-      id<MTL4RenderCommandEncoder> enc = (id<MTL4RenderCommandEncoder>)encoder;
+      id<MTLRenderCommandEncoder> enc = (id<MTLRenderCommandEncoder>)encoder;
       MTLViewport *vps = (MTLViewport *)viewports;
       [enc setViewports:vps count:count];
    }
@@ -304,7 +304,7 @@ mtl_set_scissor_rects(mtl_render_encoder *encoder,
                       struct mtl_scissor_rect *scissor_rects, uint32_t count)
 {
    @autoreleasepool {
-      id<MTL4RenderCommandEncoder> enc = (id<MTL4RenderCommandEncoder>)encoder;
+      id<MTLRenderCommandEncoder> enc = (id<MTLRenderCommandEncoder>)encoder;
       MTLScissorRect *rects = (MTLScissorRect *)scissor_rects;
       [enc setScissorRects:rects count:count];
    }
@@ -315,7 +315,7 @@ mtl_render_set_pipeline_state(mtl_render_encoder *encoder,
                               mtl_render_pipeline_state *pipeline)
 {
    @autoreleasepool {
-      id<MTL4RenderCommandEncoder> enc = (id<MTL4RenderCommandEncoder>)encoder;
+      id<MTLRenderCommandEncoder> enc = (id<MTLRenderCommandEncoder>)encoder;
       id<MTLRenderPipelineState> pipe = (id<MTLRenderPipelineState>)pipeline;
       [enc setRenderPipelineState:pipe];
    }
@@ -326,7 +326,7 @@ mtl_set_depth_stencil_state(mtl_render_encoder *encoder,
                             mtl_depth_stencil_state *state)
 {
    @autoreleasepool {
-      id<MTL4RenderCommandEncoder> enc = (id<MTL4RenderCommandEncoder>)encoder;
+      id<MTLRenderCommandEncoder> enc = (id<MTLRenderCommandEncoder>)encoder;
       id<MTLDepthStencilState> s = (id<MTLDepthStencilState>)state;
       [enc setDepthStencilState:s];
    }
@@ -337,7 +337,7 @@ mtl_set_stencil_references(mtl_render_encoder *encoder, uint32_t front,
                            uint32_t back)
 {
    @autoreleasepool {
-      id<MTL4RenderCommandEncoder> enc = (id<MTL4RenderCommandEncoder>)encoder;
+      id<MTLRenderCommandEncoder> enc = (id<MTLRenderCommandEncoder>)encoder;
       [enc setStencilFrontReferenceValue:front backReferenceValue:back];
    }
 }
@@ -347,7 +347,7 @@ mtl_set_front_face_winding(mtl_render_encoder *encoder,
                            enum mtl_winding winding)
 {
    @autoreleasepool {
-      id<MTL4RenderCommandEncoder> enc = (id<MTL4RenderCommandEncoder>)encoder;
+      id<MTLRenderCommandEncoder> enc = (id<MTLRenderCommandEncoder>)encoder;
       [enc setFrontFacingWinding:(MTLWinding)winding];
    }
 }
@@ -356,7 +356,7 @@ void
 mtl_set_cull_mode(mtl_render_encoder *encoder, enum mtl_cull_mode mode)
 {
    @autoreleasepool {
-      id<MTL4RenderCommandEncoder> enc = (id<MTL4RenderCommandEncoder>)encoder;
+      id<MTLRenderCommandEncoder> enc = (id<MTLRenderCommandEncoder>)encoder;
       [enc setCullMode:(MTLCullMode)mode];
    }
 }
@@ -367,7 +367,7 @@ mtl_set_visibility_result_mode(mtl_render_encoder *encoder,
                                size_t offset)
 {
    @autoreleasepool {
-      id<MTL4RenderCommandEncoder> enc = (id<MTL4RenderCommandEncoder>)encoder;
+      id<MTLRenderCommandEncoder> enc = (id<MTLRenderCommandEncoder>)encoder;
       [enc setVisibilityResultMode:(MTLVisibilityResultMode)mode offset:offset];
    }
 }
@@ -377,7 +377,7 @@ mtl_set_depth_bias(mtl_render_encoder *encoder, float depth_bias,
                    float slope_scale, float clamp)
 {
    @autoreleasepool {
-      id<MTL4RenderCommandEncoder> enc = (id<MTL4RenderCommandEncoder>)encoder;
+      id<MTLRenderCommandEncoder> enc = (id<MTLRenderCommandEncoder>)encoder;
       [enc setDepthBias:depth_bias slopeScale:slope_scale clamp:clamp];
    }
 }
@@ -387,7 +387,7 @@ mtl_set_depth_clip_mode(mtl_render_encoder *encoder,
                         enum mtl_depth_clip_mode mode)
 {
    @autoreleasepool {
-      id<MTL4RenderCommandEncoder> enc = (id<MTL4RenderCommandEncoder>)encoder;
+      id<MTLRenderCommandEncoder> enc = (id<MTLRenderCommandEncoder>)encoder;
       [enc setDepthClipMode:(MTLDepthClipMode)mode];
    }
 }
@@ -396,7 +396,7 @@ void
 mtl_set_depth_test_bounds(mtl_render_encoder *encoder, float min, float max)
 {
    @autoreleasepool {
-      id<MTL4RenderCommandEncoder> enc = (id<MTL4RenderCommandEncoder>)encoder;
+      id<MTLRenderCommandEncoder> enc = (id<MTLRenderCommandEncoder>)encoder;
       [enc setDepthTestMinBound:min maxBound:max];
    }
 }
@@ -406,7 +406,7 @@ mtl_set_vertex_amplification_count(mtl_render_encoder *encoder,
                                    uint32_t *layer_ids, uint32_t id_count)
 {
    @autoreleasepool {
-      id<MTL4RenderCommandEncoder> enc = (id<MTL4RenderCommandEncoder>)encoder;
+      id<MTLRenderCommandEncoder> enc = (id<MTLRenderCommandEncoder>)encoder;
       MTLVertexAmplificationViewMapping mappings[32];
       for (uint32_t i = 0u; i < id_count; ++i) {
          mappings[i].renderTargetArrayIndexOffset = layer_ids[i];
@@ -422,8 +422,8 @@ mtl_render_set_argument_table(mtl_render_encoder *encoder,
                               enum mtl_render_stages stages)
 {
    @autoreleasepool {
-      id<MTL4RenderCommandEncoder> enc = (id<MTL4RenderCommandEncoder>)encoder;
-      id<MTL4ArgumentTable> t = (id<MTL4ArgumentTable>)table;
+      id<MTLRenderCommandEncoder> enc = (id<MTLRenderCommandEncoder>)encoder;
+      id<MTLArgumentTable> t = (id<MTLArgumentTable>)table;
       [enc setArgumentTable:t atStages:(MTLRenderStages)stages];
    }
 }
@@ -435,7 +435,7 @@ mtl_draw_primitives(mtl_render_encoder *encoder,
                     uint32_t baseInstance)
 {
    @autoreleasepool {
-      id<MTL4RenderCommandEncoder> enc = (id<MTL4RenderCommandEncoder>)encoder;
+      id<MTLRenderCommandEncoder> enc = (id<MTLRenderCommandEncoder>)encoder;
       MTLPrimitiveType type = (MTLPrimitiveType)primitve_type;
       [enc drawPrimitives:type vertexStart:vertexStart vertexCount:vertexCount instanceCount:instanceCount baseInstance:baseInstance];
    }
@@ -451,7 +451,7 @@ mtl_draw_indexed_primitives(mtl_render_encoder *encoder,
                             uint32_t base_instance)
 {
    @autoreleasepool {
-      id<MTL4RenderCommandEncoder> enc = (id<MTL4RenderCommandEncoder>)encoder;
+      id<MTLRenderCommandEncoder> enc = (id<MTLRenderCommandEncoder>)encoder;
       MTLIndexType ndx_type = (MTLIndexType)index_type;
       MTLPrimitiveType primitive = (MTLPrimitiveType)primitve_type;
       [enc drawIndexedPrimitives:primitive
@@ -471,7 +471,7 @@ mtl_draw_primitives_indirect(mtl_render_encoder *encoder,
                              uint64_t addr)
 {
    @autoreleasepool {
-      id<MTL4RenderCommandEncoder> enc = (id<MTL4RenderCommandEncoder>)encoder;
+      id<MTLRenderCommandEncoder> enc = (id<MTLRenderCommandEncoder>)encoder;
       [enc drawPrimitives:(MTLPrimitiveType)primitve_type indirectBuffer:addr];
    }
 }
@@ -485,7 +485,7 @@ mtl_draw_indexed_primitives_indirect(mtl_render_encoder *encoder,
                                      uint64_t addr)
 {
    @autoreleasepool {
-      id<MTL4RenderCommandEncoder> enc = (id<MTL4RenderCommandEncoder>)encoder;
+      id<MTLRenderCommandEncoder> enc = (id<MTLRenderCommandEncoder>)encoder;
       MTLPrimitiveType type = (MTLPrimitiveType)primitve_type;
       MTLIndexType ndx_type = (MTLIndexType)index_type;
       [enc drawIndexedPrimitives:type
@@ -501,10 +501,10 @@ mtl_compute_write_timestamp(mtl_compute_encoder *encoder,
                             mtl_counter_heap *heap, uint32_t index)
 {
    @autoreleasepool {
-      id<MTL4ComputeCommandEncoder> enc =
-         (id<MTL4ComputeCommandEncoder>)encoder;
-      id<MTL4CounterHeap> h = (id<MTL4CounterHeap>)heap;
-      [enc writeTimestampWithGranularity:MTL4TimestampGranularityRelaxed
+      id<MTLComputeCommandEncoder> enc =
+         (id<MTLComputeCommandEncoder>)encoder;
+      id<MTLCounterHeap> h = (id<MTLCounterHeap>)heap;
+      [enc writeTimestampWithGranularity:MTLTimestampGranularityRelaxed
                                 intoHeap:h
                                  atIndex:index];
    }
@@ -516,9 +516,9 @@ mtl_render_write_timestamp(mtl_render_encoder *encoder,
                            uint32_t index)
 {
    @autoreleasepool {
-      id<MTL4RenderCommandEncoder> enc = (id<MTL4RenderCommandEncoder>)encoder;
-      id<MTL4CounterHeap> h = (id<MTL4CounterHeap>)heap;
-      [enc writeTimestampWithGranularity:MTL4TimestampGranularityRelaxed
+      id<MTLRenderCommandEncoder> enc = (id<MTLRenderCommandEncoder>)encoder;
+      id<MTLCounterHeap> h = (id<MTLCounterHeap>)heap;
+      [enc writeTimestampWithGranularity:MTLTimestampGranularityRelaxed
                               afterStage:(MTLRenderStages)stage
                                 intoHeap:h
                                  atIndex:index];
@@ -532,7 +532,7 @@ mtl_render_set_color_store_action(mtl_render_encoder *encoder,
                                   uint32_t index)
 {
     @autoreleasepool {
-        id<MTL4RenderCommandEncoder> enc = (id<MTL4RenderCommandEncoder>)encoder;
+        id<MTLRenderCommandEncoder> enc = (id<MTLRenderCommandEncoder>)encoder;
         [enc setColorStoreAction:(MTLStoreAction)action
                          atIndex:index];
     }
@@ -542,7 +542,7 @@ void mtl_render_set_depth_store_action(mtl_render_encoder *encoder,
                                        enum mtl_store_action action)
 {
     @autoreleasepool {
-        id<MTL4RenderCommandEncoder> enc = (id<MTL4RenderCommandEncoder>)encoder;
+        id<MTLRenderCommandEncoder> enc = (id<MTLRenderCommandEncoder>)encoder;
         [enc setDepthStoreAction:(MTLStoreAction)action];
     }
 }
@@ -551,7 +551,7 @@ void mtl_render_set_stencil_store_action(mtl_render_encoder *encoder,
                                        enum mtl_store_action action)
 {
     @autoreleasepool {
-        id<MTL4RenderCommandEncoder> enc = (id<MTL4RenderCommandEncoder>)encoder;
+        id<MTLRenderCommandEncoder> enc = (id<MTLRenderCommandEncoder>)encoder;
         [enc setStencilStoreAction:(MTLStoreAction)action];
     }
 }
@@ -563,7 +563,7 @@ mtl_draw_mesh_threadgroups(mtl_render_encoder *encoder,
                            struct mtl_size threads_per_object_threadgroup)
 {
    @autoreleasepool {
-      id<MTL4RenderCommandEncoder> enc = (id<MTL4RenderCommandEncoder>)encoder;
+      id<MTLRenderCommandEncoder> enc = (id<MTLRenderCommandEncoder>)encoder;
       MTLSize grid = MTLSizeMake(threadgroups_per_grid.x, threadgroups_per_grid.y, threadgroups_per_grid.z);
       MTLSize threadgroup = MTLSizeMake(threads_per_object_threadgroup.x, threads_per_object_threadgroup.y, threads_per_object_threadgroup.z);
 
@@ -585,7 +585,7 @@ mtl_draw_mesh_threadgroups_indirect(mtl_render_encoder *encoder,
                                     uint64_t indirect_offset)
 {
    @autoreleasepool {
-      id<MTL4RenderCommandEncoder> enc = (id<MTL4RenderCommandEncoder>)encoder;
+      id<MTLRenderCommandEncoder> enc = (id<MTLRenderCommandEncoder>)encoder;
 
       // Try various method signatures for Metal 4 mesh shaders indirect
       if ([enc respondsToSelector:@selector(drawMeshThreadgroupsWithIndirectBuffer:indirectBufferOffset:)]) {
