@@ -131,8 +131,10 @@ mtl_acceleration_structure_encoder_copy_to_buffer(mtl_acceleration_structure_com
 {
    @autoreleasepool {
       id<MTLAccelerationStructureCommandEncoder> enc = (id<MTLAccelerationStructureCommandEncoder>)encoder;
-      [enc copyAccelerationStructureToBuffer:(id<MTLAccelerationStructure>)src
-                              destinationBuffer:(id<MTLBuffer>)dst];
+      // Metal 4 API: copyAccelerationStructure:toBuffer:offset:
+      [enc copyAccelerationStructure:(id<MTLAccelerationStructure>)src
+                            toBuffer:(id<MTLBuffer>)dst
+                              offset:0];
    }
 }
 
@@ -143,8 +145,10 @@ mtl_acceleration_structure_encoder_copy_from_buffer(mtl_acceleration_structure_c
 {
    @autoreleasepool {
       id<MTLAccelerationStructureCommandEncoder> enc = (id<MTLAccelerationStructureCommandEncoder>)encoder;
+      // Metal 4 API: copyBuffer:toAccelerationStructure:offset:
       [enc copyBuffer:(id<MTLBuffer>)src
-destinationAccelerationStructure:(id<MTLAccelerationStructure>)dst];
+          toAccelerationStructure:(id<MTLAccelerationStructure>)dst
+                            offset:0];
    }
 }
 
@@ -154,9 +158,7 @@ mtl_acceleration_structure_get_gpu_address(mtl_acceleration_structure *as)
    @autoreleasepool {
       id<MTLAccelerationStructure> mtl_as = (id<MTLAccelerationStructure>)as;
       MTLResourceID resource_id = mtl_as.gpuResourceID;
-      // MTLResourceID is a struct, use union to convert to uint64_t
-      union { MTLResourceID id; uint64_t value; } converter;
-      converter.id = resource_id;
-      return converter.value;
+      // MTLResourceID is a struct with a single uint64_t field
+      return resource_id.value;
    }
 }

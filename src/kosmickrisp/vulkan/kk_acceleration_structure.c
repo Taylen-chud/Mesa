@@ -371,8 +371,20 @@ void
 kk_write_acceleration_structure_descriptor(struct kk_device *dev,
                                            VkWriteDescriptorSet *write)
 {
-   for (uint32_t i = 0; i < write->descriptorCount; i++) {
-      VK_FROM_HANDLE(kk_acceleration_structure, as, write->pAccelerationStructures[i]);
+   /* Find VkWriteDescriptorSetAccelerationStructureKHR in pNext chain */
+   const VkWriteDescriptorSetAccelerationStructureKHR *as_write = NULL;
+   for (const void *p = write->pNext; p; p = ((const VkBaseInStructure *)p)->pNext) {
+      if (((const VkBaseInStructure *)p)->sType == VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_ACCELERATION_STRUCTURE_KHR) {
+         as_write = (const VkWriteDescriptorSetAccelerationStructureKHR *)p;
+         break;
+      }
+   }
+
+   if (!as_write)
+      return;
+
+   for (uint32_t i = 0; i < as_write->accelerationStructureCount; i++) {
+      VK_FROM_HANDLE(kk_acceleration_structure, as, as_write->pAccelerationStructures[i]);
       /* TODO: Write to descriptor set */
    }
 }

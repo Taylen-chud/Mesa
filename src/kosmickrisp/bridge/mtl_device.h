@@ -15,8 +15,10 @@
 
 /* Forward declare Objective-C types for C compatibility.
  * Do NOT import Foundation/Foundation.h in this header - it's included by C files.
- * The implementation file (mtl_device.m) imports Foundation. */
-typedef struct NSError NSError;
+ * The implementation file (mtl_device.m) imports Foundation.
+ * NOTE: NSError is an ObjC class, not a C struct. We use void* for error handling
+ * to avoid collision with Foundation when this header is included in ObjC files. */
+typedef void *kk_mtl_error_t;
 
 /* TODO_KOSMICKRISP Remove */
 struct kk_image_layout;
@@ -78,6 +80,6 @@ mtl_command_buffer *mtl_new_command_buffer(mtl_device *device);
 mtl_render_pipeline_state *
 mtl_new_mesh_render_pipeline_state(mtl_device *device,
                                    struct mtl_mesh_render_pipeline_descriptor *desc,
-                                   NSError **error);
+                                   kk_mtl_error_t *error);
 
 #endif /* MTL_DEVICE_H */

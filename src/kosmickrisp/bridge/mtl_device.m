@@ -372,7 +372,7 @@ mtl_new_command_buffer(mtl_device *device)
 mtl_render_pipeline_state *
 mtl_new_mesh_render_pipeline_state(mtl_device *device,
                                    struct mtl_mesh_render_pipeline_descriptor *desc,
-                                   NSError **error)
+                                   kk_mtl_error_t *error)
 {
    @autoreleasepool {
       id<MTLDevice> dev = (id<MTLDevice>)device;
@@ -384,8 +384,11 @@ mtl_new_mesh_render_pipeline_state(mtl_device *device,
       // Mesh shader specific properties would go here when available
       (void)desc;
 
+      NSError *nsError = nil;
       id<MTLRenderPipelineState> pipeline = [dev newRenderPipelineStateWithDescriptor:mtl_desc
-                                                                                     error:error];
+                                                                                     error:&nsError];
+      if (error)
+         *error = (kk_mtl_error_t)nsError;
       return (mtl_render_pipeline_state *)pipeline;
    }
 }
