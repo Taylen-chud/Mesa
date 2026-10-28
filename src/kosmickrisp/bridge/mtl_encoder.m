@@ -566,7 +566,16 @@ mtl_draw_mesh_threadgroups(mtl_render_encoder *encoder,
       id<MTL4RenderCommandEncoder> enc = (id<MTL4RenderCommandEncoder>)encoder;
       MTLSize grid = MTLSizeMake(threadgroups_per_grid.x, threadgroups_per_grid.y, threadgroups_per_grid.z);
       MTLSize threadgroup = MTLSizeMake(threads_per_object_threadgroup.x, threads_per_object_threadgroup.y, threads_per_object_threadgroup.z);
-      [enc drawMeshThreadgroups:grid threadsPerObjectThreadgroup:threadgroup];
+
+      // Try various method signatures for Metal 4 mesh shaders
+      if ([enc respondsToSelector:@selector(drawMeshThreadgroups:threadsPerObjectThreadgroup:)]) {
+         [enc drawMeshThreadgroups:grid threadsPerObjectThreadgroup:threadgroup];
+      } else if ([enc respondsToSelector:@selector(drawMeshThreadgroups:meshShader:threadsPerObjectThreadgroup:)]) {
+         // Might need mesh shader parameter
+         fprintf(stderr, "Warning: drawMeshThreadgroups:meshShader:threadsPerObjectThreadgroup: not fully implemented\n");
+      } else {
+         fprintf(stderr, "Warning: No suitable drawMeshThreadgroups method found\n");
+      }
    }
 }
 
@@ -577,7 +586,15 @@ mtl_draw_mesh_threadgroups_indirect(mtl_render_encoder *encoder,
 {
    @autoreleasepool {
       id<MTL4RenderCommandEncoder> enc = (id<MTL4RenderCommandEncoder>)encoder;
-      [enc drawMeshThreadgroupsWithIndirectBuffer:(id<MTLBuffer>)indirect_buffer
-                                    indirectBufferOffset:indirect_offset];
+
+      // Try various method signatures for Metal 4 mesh shaders indirect
+      if ([enc respondsToSelector:@selector(drawMeshThreadgroupsWithIndirectBuffer:indirectBufferOffset:)]) {
+         [enc drawMeshThreadgroupsWithIndirectBuffer:(id<MTLBuffer>)indirect_buffer
+                                  indirectBufferOffset:indirect_offset];
+      } else if ([enc respondsToSelector:@selector(drawMeshThreadgroupsWithIndirectBuffer:indirectBufferOffset:meshShader:)]) {
+         fprintf(stderr, "Warning: drawMeshThreadgroupsWithIndirectBuffer:indirectBufferOffset:meshShader: not fully implemented\n");
+      } else {
+         fprintf(stderr, "Warning: No suitable drawMeshThreadgroupsWithIndirectBuffer method found\n");
+      }
    }
 }

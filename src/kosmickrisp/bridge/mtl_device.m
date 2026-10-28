@@ -16,6 +16,7 @@
 #include <Metal/MTL4Counters.h>
 #include <Metal/MTLCaptureManager.h>
 #include <Metal/MTLDevice.h>
+#include <Metal/MTLRenderPipeline.h>
 
 /* Device creation */
 mtl_device *
