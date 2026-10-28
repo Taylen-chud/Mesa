@@ -88,8 +88,20 @@ mtl_acceleration_structure_encoder_build(mtl_acceleration_structure_command_enco
       // Note: MTLAccelerationStructureBuildDescriptor may not exist in this SDK version
       // Using a simplified approach for now
       // TODO: Implement proper build descriptor when API is available
-      (void)info;
-      // [enc buildAccelerationStructure:desc];
+
+      // Create a basic build descriptor if available
+      Class buildDescriptorClass = NSClassFromString(@"MTLAccelerationStructureBuildDescriptor");
+      if (buildDescriptorClass) {
+         id buildDesc = [buildDescriptorClass new];
+         // Configure buildDesc from info if possible
+         // This is a placeholder - full implementation requires MTL4 API
+         (void)info;
+         // [enc buildAccelerationStructure:buildDesc];
+      } else {
+         // Fallback: log warning - acceleration structure build not fully implemented
+         fprintf(stderr, "Warning: MTLAccelerationStructureBuildDescriptor not available, acceleration structure build skipped\n");
+         (void)info;
+      }
    }
 }
 
