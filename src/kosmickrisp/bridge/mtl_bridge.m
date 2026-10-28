@@ -63,7 +63,6 @@ mtl_acceleration_structure_create(mtl_device *device,
       // The type might be inferred from the build descriptor or set differently
       // For now, we create the structure without explicit type
 
-      NSUInteger usage = MTLResourceUsageRayTracing;
       id<MTLAccelerationStructure> as = [dev newAccelerationStructureWithDescriptor:desc
                                                                        compactSize:&size];
       return (mtl_acceleration_structure *)as;
@@ -103,19 +102,19 @@ mtl_acceleration_structure_encoder_copy(mtl_acceleration_structure_command_encod
    @autoreleasepool {
       id<MTLAccelerationStructureCommandEncoder> enc = (id<MTLAccelerationStructureCommandEncoder>)encoder;
 
-      MTLCopyAccelerationStructureMode mtl_mode;
+      MTLAccelerationStructureCopyMode mtl_mode;
       switch (mode) {
       case MTL_COPY_ACCELERATION_STRUCTURE_MODE_CLONE:
-         mtl_mode = MTLCopyAccelerationStructureModeClone;
+         mtl_mode = MTLAccelerationStructureCopyModeClone;
          break;
       case MTL_COPY_ACCELERATION_STRUCTURE_MODE_COMPACT:
-         mtl_mode = MTLCopyAccelerationStructureModeCompact;
+         mtl_mode = MTLAccelerationStructureCopyModeCompact;
          break;
       case MTL_COPY_ACCELERATION_STRUCTURE_MODE_SERIALIZE:
-         mtl_mode = MTLCopyAccelerationStructureModeSerialize;
+         mtl_mode = MTLAccelerationStructureCopyModeSerialize;
          break;
       case MTL_COPY_ACCELERATION_STRUCTURE_MODE_DESERIALIZE:
-         mtl_mode = MTLCopyAccelerationStructureModeDeserialize;
+         mtl_mode = MTLAccelerationStructureCopyModeDeserialize;
          break;
       }
 
@@ -154,6 +153,6 @@ mtl_acceleration_structure_get_gpu_address(mtl_acceleration_structure *as)
 {
    @autoreleasepool {
       id<MTLAccelerationStructure> mtl_as = (id<MTLAccelerationStructure>)as;
-      return mtl_as.gpuResourceID;
+      return (uint64_t)mtl_as.gpuResourceID;
    }
 }
