@@ -14,8 +14,11 @@
 #include "kk_physical_device.h"
 
 #include "kosmickrisp/bridge/mtl_bridge.h"
+#include "kosmickrisp/bridge/mtl_encoder.h"
 
 #include "kk_entrypoints.h"
+
+#include "vk_meta.h"
 
 static VkResult
 kk_cmd_bind_map_buffer(struct vk_command_buffer *vk_cmd,
@@ -39,6 +42,26 @@ kk_cmd_bind_map_buffer(struct vk_command_buffer *vk_cmd,
    return VK_SUCCESS;
 }
 
+static void
+kk_cmd_draw_volume(struct vk_command_buffer *vk_cmd,
+                   struct vk_meta_device *meta,
+                   const struct vk_meta_rect *rect,
+                   uint32_t layer_count)
+{
+   struct kk_cmd_buffer *cmd = container_of(vk_cmd, struct kk_cmd_buffer, vk);
+
+   /* On A18/iOS 27+, when the source texture and destination render target
+    * are aliased (same underlying Metal resource), we need an explicit
+    * barrier with MTLVisibilityOptionResourceAlias to ensure proper
+    * synchronization. The meta blit path doesn't insert this barrier, so
+    * we add it here before the draw call. */
+   mtl_render_encoder *enc = cmd->metal.render;
+   if (enc)
+      mtl_barrier_after_stages(enc, MTL_STAGE_VERTEX, MTL_STAGE_FRAGMENT);
+
+   vk_meta_draw_volume(vk_cmd, meta, rect, layer_count);
+}
+
 VkResult
 kk_device_init_meta(struct kk_device *dev)
 {
@@ -50,6 +73,7 @@ kk_device_init_meta(struct kk_device *dev)
    dev->meta.use_stencil_export = true;
    dev->meta.use_rect_list_pipeline = true;
    dev->meta.cmd_bind_map_buffer = kk_cmd_bind_map_buffer;
+   dev->meta.cmd_draw_volume = kk_cmd_draw_volume;
    dev->meta.max_bind_map_buffer_size_B = 64 * 1024;
 
    for (unsigned i = 0; i < VK_META_BUFFER_CHUNK_SIZE_COUNT; ++i) {
