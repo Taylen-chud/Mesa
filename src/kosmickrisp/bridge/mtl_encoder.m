@@ -14,6 +14,13 @@
 #include <Metal/MTLRenderPass.h>
 
 /* Common encoder utils */
+
+/* MTLVisibilityOptionResourceAlias = 1 << 0 = 1 (available on iOS 17+, macOS 14+)
+ * Not defined in older SDKs, so we define it at runtime.
+ * This fixes synchronization issues on newer GPUs (A18, iOS 27) where
+ * resource alias visibility is required for proper barrier behavior. */
+static const NSUInteger MTLVisibilityOptionResourceAlias = 1;
+
 void
 mtl_end_encoding(void *encoder)
 {
@@ -29,10 +36,8 @@ mtl_barrier_after_stages(void *encoder, enum mtl_stages after_stages,
 {
    @autoreleasepool {
       id<MTLCommandEncoder> enc = (id<MTLCommandEncoder>)encoder;
-      /* TODO_KOSMICKRISP Expose visibility option since resource alias should only be required
-       * if occlusion queries are used */
       [enc barrierAfterStages:(MTLStages)after_stages beforeQueueStages:(MTLStages)before_queue_stages
-           visibilityOptions:0];
+           visibilityOptions:MTLVisibilityOptionResourceAlias];
    }
 }
 
@@ -43,7 +48,7 @@ mtl_barrier_after_encoder_stages(void *encoder, enum mtl_stages after_stages,
    @autoreleasepool {
       id<MTLCommandEncoder> enc = (id<MTLCommandEncoder>)encoder;
       [enc barrierAfterEncoderStages:(MTLStages)after_stages beforeEncoderStages:(MTLStages)before_queue_stages
-           visibilityOptions:0];
+           visibilityOptions:MTLVisibilityOptionResourceAlias];
    }
 }
 
@@ -56,7 +61,7 @@ mtl_barrier_after_queue_stages(void *encoder,
       id<MTLCommandEncoder> enc = (id<MTLCommandEncoder>)encoder;
       [enc barrierAfterQueueStages:(MTLStages)after_queue_stages
                       beforeStages:(MTLStages)before_stages
-                 visibilityOptions:0];
+                 visibilityOptions:MTLVisibilityOptionResourceAlias];
    }
 }
 
