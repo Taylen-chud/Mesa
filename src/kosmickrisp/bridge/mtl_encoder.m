@@ -8,7 +8,7 @@
 
 #include <Metal/MTLCommandBuffer.h>
 #include <Metal/MTLComputeCommandEncoder.h>
-#include <Metal/MTLCounterHeap.h>
+#include <Metal/MTL4CounterHeap.h>
 #include <Metal/MTLRenderCommandEncoder.h>
 #include <Metal/MTLRenderPass.h>
 
@@ -503,8 +503,8 @@ mtl_compute_write_timestamp(mtl_compute_encoder *encoder,
    @autoreleasepool {
       id<MTLComputeCommandEncoder> enc =
          (id<MTLComputeCommandEncoder>)encoder;
-      id<MTLCounterHeap> h = (id<MTLCounterHeap>)heap;
-      [enc writeTimestampWithGranularity:MTLTimestampGranularityRelaxed
+      id<MTL4CounterHeap> h = (id<MTL4CounterHeap>)heap;
+      [enc writeTimestampWithGranularity:MTL4TimestampGranularityRelaxed
                                 intoHeap:h
                                  atIndex:index];
    }
@@ -517,8 +517,8 @@ mtl_render_write_timestamp(mtl_render_encoder *encoder,
 {
    @autoreleasepool {
       id<MTLRenderCommandEncoder> enc = (id<MTLRenderCommandEncoder>)encoder;
-      id<MTLCounterHeap> h = (id<MTLCounterHeap>)heap;
-      [enc writeTimestampWithGranularity:MTLTimestampGranularityRelaxed
+      id<MTL4CounterHeap> h = (id<MTL4CounterHeap>)heap;
+      [enc writeTimestampWithGranularity:MTL4TimestampGranularityRelaxed
                               afterStage:(MTLRenderStages)stage
                                 intoHeap:h
                                  atIndex:index];

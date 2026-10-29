@@ -15,6 +15,9 @@
 #include "vk_acceleration_structure.h"
 #include "kosmickrisp/bridge/mtl_types.h"
 
+/* Forward declaration for kk_cmd_buffer to avoid conflicting types with incomplete type */
+struct kk_cmd_buffer;
+
 struct kk_acceleration_structure {
    struct vk_acceleration_structure vk;
 
