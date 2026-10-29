@@ -8,7 +8,7 @@
 
 #include <Metal/MTLCommandBuffer.h>
 #include <Metal/MTLComputeCommandEncoder.h>
-#include <Metal/MTL4CounterHeap.h>
+#include <Metal/MTL4Counters.h>
 #include <Metal/MTLRenderCommandEncoder.h>
 #include <Metal/MTLRenderPass.h>
 
