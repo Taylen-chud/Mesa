@@ -13,6 +13,7 @@
 #include "kk_physical_device.h"
 
 #include "kosmickrisp/bridge/mtl_format.h"
+#include "kosmickrisp/bridge/vk_to_mtl_map.h"
 
 #include "vk_enum_defines.h"
 #include "vk_format.h"
@@ -373,15 +374,6 @@ kk_get_va_format(enum pipe_format format)
       return NULL;
 
    return &kk_vf_formats[format];
-}
-
-enum mtl_pixel_format
-vk_format_to_mtl_pixel_format(VkFormat vkformat)
-{
-   enum pipe_format format = vk_format_to_pipe_format(vkformat);
-   const struct kk_va_format *supported_format = kk_get_va_format(format);
-   assert(supported_format);
-   return supported_format->mtl_pixel_format;
 }
 
 VKAPI_ATTR void VKAPI_CALL
