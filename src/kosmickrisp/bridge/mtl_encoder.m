@@ -32,7 +32,7 @@ mtl_barrier_after_stages(void *encoder, enum mtl_stages after_stages,
       /* TODO_KOSMICKRISP Expose visibility option since resource alias should only be required
        * if occlusion queries are used */
       [enc barrierAfterStages:(MTLStages)after_stages beforeQueueStages:(MTLStages)before_queue_stages
-           visibilityOptions:MTLVisibilityOptionResourceAlias];
+           visibilityOptions:0];
    }
 }
 
@@ -43,7 +43,7 @@ mtl_barrier_after_encoder_stages(void *encoder, enum mtl_stages after_stages,
    @autoreleasepool {
       id<MTLCommandEncoder> enc = (id<MTLCommandEncoder>)encoder;
       [enc barrierAfterEncoderStages:(MTLStages)after_stages beforeEncoderStages:(MTLStages)before_queue_stages
-           visibilityOptions:MTLVisibilityOptionResourceAlias];
+           visibilityOptions:0];
    }
 }
 
@@ -56,7 +56,7 @@ mtl_barrier_after_queue_stages(void *encoder,
       id<MTLCommandEncoder> enc = (id<MTLCommandEncoder>)encoder;
       [enc barrierAfterQueueStages:(MTLStages)after_queue_stages
                       beforeStages:(MTLStages)before_stages
-                 visibilityOptions:MTLVisibilityOptionResourceAlias];
+                 visibilityOptions:0];
    }
 }
 
@@ -160,7 +160,7 @@ mtl_copy_from_buffer_to_texture(mtl_compute_encoder *encoder,
          destinationSlice:data->image_slice
          destinationLevel:data->image_level
         destinationOrigin:origin
-                  options:(MTLBlitOption)data->options];
+                  options:0];
    }
 }
 
@@ -183,7 +183,7 @@ mtl_copy_from_texture_to_buffer(mtl_compute_encoder *encoder,
          destinationOffset:data->buffer_offset_B
     destinationBytesPerRow:data->buffer_stride_B
   destinationBytesPerImage:data->buffer_2d_image_size_B
-                   options:(MTLBlitOption)data->options];
+                   options:0];
    }
 }
 
